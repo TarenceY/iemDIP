@@ -5,6 +5,13 @@ const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
 const PORT = process.env.PORT || 3000;
+const authRoutes = require("./routes/auth.routes");
+const nutritionRoutes = require("./routes/nutrition.routes");
+const recipesRoutes = require("./routes/recipes.routes");
+
+app.use("/auth", authRoutes);
+app.use("/nutrition-logs", nutritionRoutes);
+app.use("/recipes", recipesRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend is running!");

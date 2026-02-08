@@ -1,4 +1,5 @@
 // app.js
+require("dotenv").config();
 console.log("Starting server...");
 
 const express = require("express");

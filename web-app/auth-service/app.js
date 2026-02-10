@@ -1,9 +1,10 @@
 // app.js
-require("dotenv").config();
+require('dotenv').config();
 console.log("Starting server...");
 
 const express = require("express");
 const app = express();
+const User = require("./models/User"); // This connects your data structure
 
 // Load MongoDB connection
 const db = require("./database");
@@ -26,6 +27,20 @@ app.get("/health", (req, res) => {
     mongoDB: mongoStatus,
     timestamp: new Date(),
   });
+});
+
+// This is the actual "work" the backend does for Milestone 1
+app.post("/api/profile", async (req, res) => {
+  try {
+    const profile = await User.findOneAndUpdate(
+      { username: "demo_user" }, // As per charter 2.1
+      req.body, 
+      { upsert: true, new: true } 
+    );
+    res.status(200).json({ message: "Profile Saved!", profile });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.listen(PORT, () => {

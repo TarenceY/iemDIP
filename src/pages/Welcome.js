@@ -43,9 +43,6 @@ export default function Welcome() {
       </div>
     </header>
 
-
-
-
       {/* HERO */}
       <section className="hero-section">
         <div className="hero-content">
@@ -73,65 +70,96 @@ export default function Welcome() {
       </section>
 
       <section className="features-section" id="features">
-      <h2>Two Smart Ways to Use SeeFood</h2>
-
-      <div className="feature-grid">
-
-        <div className="feature-card">
-          <img src={readyMeal} alt="Ready Meals" />
-          <h3>🍽 Ready Meals — Track Nutrition</h3>
-          <p>
-            Take a photo of your meal and instantly get calorie estimates, portion size insights,
-            and nutritional breakdown — no manual input needed.
+        <div className="section-head">
+          <span className="section-kicker">Features</span>
+          <h2>
+            Two Smart Ways to Use <span className="accent">SeeFood</span>
+          </h2>
+          <p className="section-subtitle">
+            Snap a photo for nutrition insights or scan ingredients to generate meals instantly.
           </p>
-          <button className="learn-btn">Learn More →</button>
         </div>
 
-        <div className="feature-card">
-          <img src={rawIngredients} alt="Raw Ingredients" />
-          <h3>🥕 Raw Ingredients — Smart Meal Prep</h3>
-          <p>
-            Scan your fridge or pantry and SeeFood will suggest meals based on ingredients
-            you already own, helping reduce waste and save time.
-          </p>
-          <button className="learn-btn">Learn More →</button>
-        </div>
+        <div className="feature-grid">
 
-      </div>
-    </section>
+          <div className="feature-card">
+            <div className="feature-media">
+              <img src={readyMeal} alt="Ready Meals" />
+              <span className="feature-pill">Most Popular</span>
+            </div>
+
+            <h3>Ready Meals</h3>
+            <p>
+              Take a photo of your meal and instantly get calorie estimates, portion size insights,
+              and a detailed nutritional breakdown.
+            </p>
+
+            <button className="learn-btn" onClick={() => navigate("/learn-ready")}>
+              Learn More <span aria-hidden>→</span>
+            </button>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-media">
+              <img src={rawIngredients} alt="Raw Ingredients" />
+              <span className="feature-pill alt">Smart Planning</span>
+            </div>
+
+            <h3>Raw Ingredients</h3>
+            <p>
+              Scan your fridge or pantry and SeeFood suggests meals based on what you already own,
+              helping reduce waste and save time.
+            </p>
+
+            <button className="learn-btn" onClick={() => navigate("/learn-raw")}>
+              Learn More <span aria-hidden>→</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
 
       <section className="why-section" id="about">
-      <h2>Why SeeFood?</h2>
-
-      <p className="why-intro">
-        People struggle to maintain a healthy lifestyle because tracking meals and planning food is time-consuming.
-        SeeFood brings both together in one simple, AI-powered platform.
-      </p>
-
-      <div className="why-grid">
-
-        <div className="why-card">
-          <img src={smartDecisions} />
-          <h4>📊 Smarter food decisions</h4>
+        <div className="section-head">
+          <span className="section-kicker">Why</span>
+          <h2>
+            Why <span className="accent">SeeFood</span>?
+          </h2>
+          <p className="why-intro">
+            Maintaining a healthy lifestyle is difficult when meal tracking and planning are time-consuming.
+            SeeFood combines both into one streamlined AI-powered experience.
+          </p>
         </div>
 
-        <div className="why-card">
-          <img src={aiInsights} />
-          <h4>🤖 AI-powered insights</h4>
-        </div>
+        <div className="why-grid">
 
-        <div className="why-card">
-          <img src={healthyEating} />
-          <h4>🍎 Healthier eating habits</h4>
-        </div>
+          <div className="why-card">
+            <div className="why-icon">01</div>
+            <h4>Smarter Decisions</h4>
+            <p>Understand your meals instantly with clear visual feedback.</p>
+          </div>
 
-        <div className="why-card">
-          <img src={lessWaste} />
-          <h4>💸 Less food waste</h4>
-        </div>
+          <div className="why-card">
+            <div className="why-icon">02</div>
+            <h4>AI-Powered Insights</h4>
+            <p>Automated analysis without manual calorie logging.</p>
+          </div>
 
-      </div>
-    </section>
+          <div className="why-card">
+            <div className="why-icon">03</div>
+            <h4>Healthier Habits</h4>
+            <p>Build sustainable routines with simple, consistent tracking.</p>
+          </div>
+
+          <div className="why-card">
+            <div className="why-icon">04</div>
+            <h4>Less Waste</h4>
+            <p>Use ingredients efficiently and reduce unnecessary purchases.</p>
+          </div>
+
+        </div>
+      </section>
+
 
 
       {/* TEAM SECTION */}

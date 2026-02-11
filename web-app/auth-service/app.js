@@ -9,6 +9,8 @@ const app = express();
 const db = require("./database");
 
 app.use(express.json());
+const usersRoutes = require("./routes/users");
+app.use("/users", usersRoutes);
 
 const PORT = process.env.PORT || 3000;
 

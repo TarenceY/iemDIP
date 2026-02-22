@@ -42,15 +42,24 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    // Allow login by username or email
+    let user;
+    if (email) {
+      user = await User.findOne({ email });
+    } else if (username) {
+      user = await User.findOne({ username });
+    } else {
+      return res.status(400).json({ message: "Username or email is required" });
+    }
+
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return res.status(400).json({ message: "Invalid password" });
 
-    res.json({ message: "Login successful", userId: user._id });
+    res.json({ message: "Login successful", userId: user._id, username: user.username });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -4,7 +4,7 @@ import axios from "axios";
 export async function sendPhotoToApi(bot, fileId, API_URL) {
   // 1) Get file path from Telegram
   const file = await bot.getFile(fileId); // { file_path: 'photos/file_123.jpg' }
-  const fileUrl = `https://api.telegram.org/file/bot${"8421621532:AAGs1TrYzS6BqQSe4E_qnM8W64Pi7N-mnOU"}/${file.file_path}`;
+  const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_TOKEN}/${file.file_path}`;
 
   // 2) Fetch the image bytes
   const imageResp = await axios.get(fileUrl, { responseType: "arraybuffer" });

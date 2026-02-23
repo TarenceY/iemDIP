@@ -1,3 +1,4 @@
+// Home.js
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
@@ -6,7 +7,7 @@ import seefoodLogo from "../assets/images/seefood-logo.jpg";
 export default function Home() {
   const navigate = useNavigate();
 
-  // Optional: change name later when you have auth user info
+  // Optional: change later when you have auth user info
   const name = useMemo(() => "there", []);
 
   return (
@@ -18,6 +19,9 @@ export default function Home() {
           role="button"
           tabIndex={0}
           onClick={() => navigate("/home")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/home");
+          }}
         >
           <img src={seefoodLogo} alt="SeeFood logo" />
           <span>SeeFood</span>
@@ -45,116 +49,85 @@ export default function Home() {
 
       {/* MAIN CONTENT */}
       <main className="home-content">
-        {/* HERO */}
-        <section className="home-hero">
-          <div className="hero-left">
-            <h1>Welcome back, {name} 👋</h1>
-            <p className="subtitle">
-              Track meals, plan recipes from your fridge, and stay on top of your health goals.
-            </p>
-
-            <div className="quick-actions">
-              <button className="chip-btn" onClick={() => navigate("/dashboard")}>
-                📊 Dashboard
-              </button>
-              <button className="chip-btn" onClick={() => navigate("/history")}>
-                🗂 History
-              </button>
-              <button className="chip-btn" onClick={() => navigate("/profile")}>
-                ⚙️ Profile
-              </button>
+        {/* Welcome + Calories Panel */}
+        <section className="home-panel">
+          <div className="panel-head">
+            <div>
+              <h1 className="welcome">Welcome back, {name}</h1>
+              <p className="welcome-sub">Let’s keep you on track today.</p>
             </div>
           </div>
 
-          <div className="hero-right">
-            <div className="hero-mini-card">
-              <div className="mini-title">Today’s tip</div>
-              <div className="mini-text">
-                Try adding a vegetable to your next meal for an easy nutrition boost.
+          <div className="panel-grid">
+            {/* Donut placeholder */}
+            <div className="calorie-ring" aria-label="Calories remaining">
+              <div className="ring-center">
+                <div className="ring-kcal">1240</div>
+                <div className="ring-sub">kcal left</div>
               </div>
             </div>
-            <div className="hero-mini-card">
-              <div className="mini-title">Quick start</div>
-              <div className="mini-text">
-                Scan a meal to estimate calories, or scan ingredients to get recipe ideas.
-              </div>
+
+            {/* Macro bars placeholder */}
+            <div className="macro-list">
+              <MacroRow label="Carbs" value="120g" pct={37} />
+              <MacroRow label="Protein" value="70g" pct={93} />
+              <MacroRow label="Fats" value="20g" pct={45} />
             </div>
           </div>
         </section>
 
-        {/* MAIN ACTION CARDS */}
+        {/* Actions */}
         <section className="home-section">
-          <h2 className="section-title">What would you like to do?</h2>
+          <h2 className="section-title">What do you want to do today?</h2>
 
-          <div className="home-cards">
-            <div className="home-card big">
-              <div className="card-top">
-                <div className="card-icon">🍽</div>
-                <div>
-                  <h3>Track a Meal</h3>
-                  <p>
-                    Take a photo of a ready meal to estimate calories and nutrition.
-                  </p>
-                </div>
+          <div className="action-grid">
+            <button
+              className="action-card"
+              onClick={() => navigate("/scan-meal")}
+            >
+              <div className="action-top">
+                <span className="action-kicker">Track</span>
+                <span className="action-title">Upload your meal</span>
               </div>
+              <p className="action-desc">
+                Estimate calories & macros from a photo.
+              </p>
+              <span className="action-cta">Scan meal →</span>
+            </button>
 
-              <ul className="card-bullets">
-                <li>Estimated calories + macros</li>
-                <li>Save result to history</li>
-                <li>Track weekly progress</li>
-              </ul>
-
-              <div className="card-actions">
-                <button
-                  className="primary-btn"
-                  onClick={() => navigate("/scan-meal")}
-                >
-                  Scan Meal
-                </button>
-                <button
-                  className="ghost-btn"
-                  onClick={() => navigate("/history")}
-                >
-                  View past meals →
-                </button>
+            <button
+              className="action-card"
+              onClick={() => navigate("/scan-ingredients")}
+            >
+              <div className="action-top">
+                <span className="action-kicker">Plan</span>
+                <span className="action-title">Upload your fridge</span>
               </div>
-            </div>
-
-            <div className="home-card big">
-              <div className="card-top">
-                <div className="card-icon">🥕</div>
-                <div>
-                  <h3>Plan a Meal</h3>
-                  <p>
-                    Scan your fridge to get meal ideas using ingredients you already have.
-                  </p>
-                </div>
-              </div>
-
-              <ul className="card-bullets">
-                <li>Recipe suggestions</li>
-                <li>Auto-generate grocery list</li>
-                <li>Save planned meals</li>
-              </ul>
-
-              <div className="card-actions">
-                <button
-                  className="primary-btn"
-                  onClick={() => navigate("/scan-ingredients")}
-                >
-                  Scan Ingredients
-                </button>
-                <button
-                  className="ghost-btn"
-                  onClick={() => navigate("/dashboard")}
-                >
-                  Go to dashboard →
-                </button>
-              </div>
-            </div>
+              <p className="action-desc">
+                Get recipe ideas using what you already have.
+              </p>
+              <span className="action-cta">Scan ingredients →</span>
+            </button>
           </div>
         </section>
       </main>
+    </div>
+  );
+}
+
+function MacroRow({ label, value, pct }) {
+  return (
+    <div className="macro-row">
+      <div className="macro-left">
+        <div className="macro-label">{label}</div>
+        <div className="macro-value">{value}</div>
+      </div>
+
+      <div className="macro-bar" aria-label={`${label} progress`}>
+        <div className="macro-fill" style={{ width: `${pct}%` }} />
+      </div>
+
+      <div className="macro-pct">{pct}%</div>
     </div>
   );
 }

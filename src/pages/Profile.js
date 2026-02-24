@@ -7,7 +7,7 @@ export default function Profile() {
   const navigate = useNavigate();
 
   // Demo profile data (swap with real user data later)
-  const [profile, setProfile] = useState({
+  const [profile] = useState({
     name: "Janice",
     age: 21,
     gender: "Female",
@@ -20,43 +20,16 @@ export default function Profile() {
     fatsGoal: 60,
   });
 
-  const [savedToast, setSavedToast] = useState("");
-
-  const goals = useMemo(
+  // These are not required on the view-only page, but kept here
+  // in case you want to display selectable options later.
+  useMemo(
     () => ["Balanced eating", "Lose weight", "Gain muscle", "Maintain weight"],
     []
   );
-
-  const diets = useMemo(
+  useMemo(
     () => ["No preference", "Vegetarian", "Vegan", "Halal", "Keto", "Gluten-free"],
     []
   );
-
-  function updateField(key, value) {
-    setProfile((prev) => ({ ...prev, [key]: value }));
-  }
-
-  function saveProfile() {
-    // For now just toast; later you can call your backend here.
-    setSavedToast("Profile saved ✅");
-    window.clearTimeout(window.__seefood_profile_toast);
-    window.__seefood_profile_toast = window.setTimeout(() => setSavedToast(""), 1600);
-  }
-
-  function resetProfile() {
-    setProfile({
-      name: "Janice",
-      age: 21,
-      gender: "Female",
-      goal: "Balanced eating",
-      dietaryPreference: "No preference",
-      allergies: "None",
-      dailyCalories: 1800,
-      proteinGoal: 110,
-      carbsGoal: 220,
-      fatsGoal: 60,
-    });
-  }
 
   return (
     <div className="profile-container">
@@ -87,185 +60,107 @@ export default function Profile() {
           </button>
         </nav>
 
-        <button className="logout-btn" onClick={() => navigate("/login")}>
+        <button className="nav-btn" onClick={() => navigate("/login")}>
           Log out
         </button>
       </header>
 
+      {/* MAIN CONTENT */}
       <main className="profile-content">
         {/* HERO */}
         <section className="profile-hero">
           <div className="hero-left">
             <h1>Your Profile</h1>
             <p className="profile-subtitle">
-              Manage your preferences and nutrition goals for better meal suggestions.
+              View your info and nutrition targets. Edit them on a separate page.
             </p>
           </div>
 
           <div className="hero-actions">
-            <button className="ghost-btn" onClick={resetProfile}>
-              Reset
-            </button>
-            <button className="primary-btn" onClick={saveProfile}>
-              Save changes
+            <button className="primary-btn" onClick={() => navigate("/profile/edit")}>
+              Edit profile
             </button>
           </div>
         </section>
 
         {/* GRID */}
         <section className="profile-grid">
-          {/* BASIC INFO */}
+          {/* BASIC INFO SUMMARY */}
           <div className="panel">
             <div className="panel-head">
               <h2>Basic information</h2>
-              <span className="pill">Edit</span>
+              <span className="pill">Summary</span>
             </div>
 
-            <div className="form-grid">
-              <div className="field">
-                <label>Name</label>
-                <input
-                  className="text-input"
-                  value={profile.name}
-                  onChange={(e) => updateField("name", e.target.value)}
-                  placeholder="Your name"
-                />
+            <div className="summary-grid">
+              <div className="summary-item">
+                <div className="summary-label">Name</div>
+                <div className="summary-value">{profile.name}</div>
               </div>
 
-              <div className="field">
-                <label>Age</label>
-                <input
-                  className="text-input"
-                  type="number"
-                  min="1"
-                  value={profile.age}
-                  onChange={(e) => updateField("age", Number(e.target.value))}
-                />
+              <div className="summary-item">
+                <div className="summary-label">Age</div>
+                <div className="summary-value">{profile.age}</div>
               </div>
 
-              <div className="field">
-                <label>Gender</label>
-                <select
-                  className="select-input"
-                  value={profile.gender}
-                  onChange={(e) => updateField("gender", e.target.value)}
-                >
-                  <option>Female</option>
-                  <option>Male</option>
-                  <option>Non-binary</option>
-                  <option>Prefer not to say</option>
-                </select>
+              <div className="summary-item">
+                <div className="summary-label">Gender</div>
+                <div className="summary-value">{profile.gender}</div>
               </div>
 
-              <div className="field">
-                <label>Goal</label>
-                <select
-                  className="select-input"
-                  value={profile.goal}
-                  onChange={(e) => updateField("goal", e.target.value)}
-                >
-                  {goals.map((g) => (
-                    <option key={g}>{g}</option>
-                  ))}
-                </select>
+              <div className="summary-item">
+                <div className="summary-label">Goal</div>
+                <div className="summary-value">{profile.goal}</div>
               </div>
 
-              <div className="field">
-                <label>Dietary preference</label>
-                <select
-                  className="select-input"
-                  value={profile.dietaryPreference}
-                  onChange={(e) => updateField("dietaryPreference", e.target.value)}
-                >
-                  {diets.map((d) => (
-                    <option key={d}>{d}</option>
-                  ))}
-                </select>
+              <div className="summary-item">
+                <div className="summary-label">Dietary preference</div>
+                <div className="summary-value">{profile.dietaryPreference}</div>
               </div>
 
-              <div className="field">
-                <label>Allergies</label>
-                <input
-                  className="text-input"
-                  value={profile.allergies}
-                  onChange={(e) => updateField("allergies", e.target.value)}
-                  placeholder="e.g., peanuts, shellfish"
-                />
+              <div className="summary-item">
+                <div className="summary-label">Allergies</div>
+                <div className="summary-value">{profile.allergies}</div>
               </div>
             </div>
           </div>
 
-          {/* NUTRITION GOALS */}
+          {/* NUTRITION TARGETS SUMMARY */}
           <div className="panel">
             <div className="panel-head">
               <h2>Nutrition targets</h2>
               <span className="pill">Daily</span>
             </div>
 
-            <div className="targets">
-              <div className="target">
-                <div className="target-top">
-                  <span className="target-label">Calories (kcal)</span>
-                  <span className="target-value">{profile.dailyCalories}</span>
-                </div>
-                <input
-                  className="range"
-                  type="range"
-                  min="1200"
-                  max="3500"
-                  step="50"
-                  value={profile.dailyCalories}
-                  onChange={(e) => updateField("dailyCalories", Number(e.target.value))}
-                />
-                <div className="range-meta">
-                  <span>1200</span>
-                  <span>3500</span>
-                </div>
+            <div className="summary-grid">
+              <div className="summary-item">
+                <div className="summary-label">Calories</div>
+                <div className="summary-value">{profile.dailyCalories} kcal</div>
               </div>
 
-              <div className="macro-grid">
-                <div className="macro">
-                  <label>Protein (g)</label>
-                  <input
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    value={profile.proteinGoal}
-                    onChange={(e) => updateField("proteinGoal", Number(e.target.value))}
-                  />
-                </div>
+              <div className="summary-item">
+                <div className="summary-label">Protein</div>
+                <div className="summary-value">{profile.proteinGoal} g</div>
+              </div>
 
-                <div className="macro">
-                  <label>Carbs (g)</label>
-                  <input
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    value={profile.carbsGoal}
-                    onChange={(e) => updateField("carbsGoal", Number(e.target.value))}
-                  />
-                </div>
+              <div className="summary-item">
+                <div className="summary-label">Carbs</div>
+                <div className="summary-value">{profile.carbsGoal} g</div>
+              </div>
 
-                <div className="macro">
-                  <label>Fats (g)</label>
-                  <input
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    value={profile.fatsGoal}
-                    onChange={(e) => updateField("fatsGoal", Number(e.target.value))}
-                  />
-                </div>
+              <div className="summary-item">
+                <div className="summary-label">Fats</div>
+                <div className="summary-value">{profile.fatsGoal} g</div>
               </div>
             </div>
 
-            <div className="note">
-              These targets help SeeFood personalise nutrition estimates and recipe suggestions.
+            <div className="note" style={{ marginTop: 14 }}>
+              Want to change these? Use “Edit profile”.
             </div>
           </div>
         </section>
 
-        {/* OPTIONAL: ACCOUNT PANEL */}
+        {/* ACCOUNT (optional section stays here) */}
         <section className="panel account">
           <div className="panel-head">
             <h2>Account</h2>
@@ -275,9 +170,14 @@ export default function Profile() {
           <div className="account-row">
             <div>
               <div className="account-title">Change password</div>
-              <div className="account-desc">Update your password regularly to keep your account safe.</div>
+              <div className="account-desc">
+                Update your password regularly to keep your account safe.
+              </div>
             </div>
-            <button className="ghost-btn" onClick={() => alert("Hook this to your password flow!")}>
+            <button
+              className="ghost-btn"
+              onClick={() => alert("Hook this to your password flow!")}
+            >
               Change
             </button>
           </div>
@@ -287,7 +187,9 @@ export default function Profile() {
           <div className="account-row">
             <div>
               <div className="account-title">Delete account</div>
-              <div className="account-desc">This action is permanent. Use carefully.</div>
+              <div className="account-desc">
+                This action is permanent. Use carefully.
+              </div>
             </div>
             <button
               className="danger-btn"
@@ -297,8 +199,6 @@ export default function Profile() {
             </button>
           </div>
         </section>
-
-        {savedToast && <div className="toast">{savedToast}</div>}
       </main>
     </div>
   );

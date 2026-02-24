@@ -28,21 +28,21 @@ export default function Home() {
         </div>
 
         <nav className="profile-nav">
-          <button className="ghost-btn nav-btn active" onClick={() => navigate("/home")}>
+          <button className="nav-btn active" onClick={() => navigate("/home")}>
             Home
           </button>
-          <button className="ghost-btn nav-btn" onClick={() => navigate("/dashboard")}>
+          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
             Dashboard
           </button>
-          <button className="ghost-btn nav-btn" onClick={() => navigate("/history")}>
+          <button className="nav-btn" onClick={() => navigate("/history")}>
             History
           </button>
-          <button className="ghost-btn nav-btn" onClick={() => navigate("/profile")}>
+          <button className="nav-btn" onClick={() => navigate("/profile")}>
             Profile
           </button>
         </nav>
 
-        <button className="ghost-btn logout-btn" onClick={() => navigate("/login")}>
+        <button className="nav-btn" onClick={() => navigate("/login")}>
           Log out
         </button>
       </header>

@@ -53,7 +53,7 @@
   align-items: center;
 }
 
-.nav-btn {
+.home-header .nav-btn {
   background: transparent;
   border: 1px solid transparent;
   padding: 8px 12px;
@@ -63,12 +63,12 @@
   color: var(--ink);
 }
 
-.nav-btn:hover {
+.home-header .nav-btn:hover {
   background-color: var(--green3);
   color: var(--ink);
 }
 
-.nav-btn.active {
+.home-header .nav-btn.active {
   background: rgba(31, 90, 59, 0.12);
   color: var(--green);
   border-color: rgba(31, 90, 59, 0.18);
@@ -86,36 +86,6 @@
 
 .logout-btn:hover {
   background-color: var(--green3);
-}
-
-/*PRIMARY AND GHOST BTN*/
-.primary-btn, .ghost-btn {
-  padding: 12px 20px;
-  font-weight: 700;
-  border-radius: 30px;
-  cursor: pointer;
-}
-
-.primary-btn {
-  background: var(--green);
-  color: white;
-  text-align: center;
-  transition: background-color 0.3s ease;
-}
-
-.primary-btn:hover {
-  background: var(--green3);
-}
-
-.ghost-btn {
-  background: transparent;
-  border: 2px solid var(--green);
-  color: var(--green);
-}
-
-.ghost-btn:hover {
-  background: var(--green3);
-  color: rgba(31, 90, 59, 0.06);
 }
 
 /* CONTENT */

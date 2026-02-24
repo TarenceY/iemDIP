@@ -103,7 +103,7 @@ export default function ScanIngredients() {
           <button className="nav-btn" onClick={() => navigate("/profile")}>Profile</button>
         </nav>
 
-        <button className="logout-btn" onClick={() => navigate("/login")}>Log out</button>
+        <button className="nav-btn" onClick={() => navigate("/login")}>Log out</button>
       </header>
 
       <main className="scaning-content">

@@ -7,7 +7,7 @@ import seefoodLogo from "../assets/images/seefood-logo.jpg";
 export default function Home() {
   const navigate = useNavigate();
 
-  // Optional: change later when you have auth user info
+  //change later when you have auth user info
   const name = useMemo(() => "there", []);
 
   return (
@@ -28,21 +28,21 @@ export default function Home() {
         </div>
 
         <nav className="profile-nav">
-          <button className="nav-btn active" onClick={() => navigate("/home")}>
+          <button className="ghost-btn nav-btn active" onClick={() => navigate("/home")}>
             Home
           </button>
-          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
+          <button className="ghost-btn nav-btn" onClick={() => navigate("/dashboard")}>
             Dashboard
           </button>
-          <button className="nav-btn" onClick={() => navigate("/history")}>
+          <button className="ghost-btn nav-btn" onClick={() => navigate("/history")}>
             History
           </button>
-          <button className="nav-btn" onClick={() => navigate("/profile")}>
+          <button className="ghost-btn nav-btn" onClick={() => navigate("/profile")}>
             Profile
           </button>
         </nav>
 
-        <button className="logout-btn" onClick={() => navigate("/login")}>
+        <button className="ghost-btn logout-btn" onClick={() => navigate("/login")}>
           Log out
         </button>
       </header>
@@ -92,7 +92,7 @@ export default function Home() {
               <p className="action-desc">
                 Estimate calories & macros from a photo.
               </p>
-              <span className="action-cta">Scan meal →</span>
+              <span className="ghost-btn action-cta">Scan meal →</span>
             </button>
 
             <button
@@ -106,7 +106,7 @@ export default function Home() {
               <p className="action-desc">
                 Get recipe ideas using what you already have.
               </p>
-              <span className="action-cta">Scan ingredients →</span>
+              <span className="ghost-btn action-cta">Scan ingredients →</span>
             </button>
           </div>
         </section>

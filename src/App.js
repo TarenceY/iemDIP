@@ -10,6 +10,7 @@ import History from "./pages/History";
 import Profile from "./pages/Profile";
 import ScanMeal from "./pages/ScanMeal";
 import ScanIngredients from "./pages/ScanIngredients";
+import EditProfile from "./pages/EditProfile";
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/scan-meal" element={<ScanMeal />} />
         <Route path="/scan-ingredients" element={<ScanIngredients />} />
+        <Route path="/profile/edit" element={<EditProfile />} />
       </Routes>
     </BrowserRouter>
   );

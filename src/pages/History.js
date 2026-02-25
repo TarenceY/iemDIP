@@ -104,7 +104,7 @@ export default function History() {
           </button>
         </nav>
 
-        <button className="logout-btn" onClick={() => navigate("/login")}>
+        <button className="nav-btn" onClick={() => navigate("/login")}>
           Log out
         </button>
       </header>

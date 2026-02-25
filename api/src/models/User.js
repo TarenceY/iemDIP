@@ -1,15 +1,41 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true }, // <-- add unique
-  email: { type: String, unique: true },    // <-- add unique
-  password_hash: String,
-  health_conditions: String, // optional: legacy
-  age: Number,
-  gender: String,
-  restrictions: [String], // array of dietary restrictions
-  dislikes: [String],     // array of dislikes
-  goals: [String],        // array of goals
+  first_name: { type: String, required: true },
+  last_name: { type: String, required: true },
+  email: { type: String, unique: true, required: true, lowercase: true },
+  password_hash: { type: String, required: true },
+  
+ // Personal Metrics
+  age: { type: Number },
+  gender: { 
+    type: String, 
+    enum: ["Male", "Female", "Prefer not to say"] 
+  },
+  height: { type: Number }, // in cm
+  weight: { type: Number }, // in kg
+
+  // Lifestyle & Activity
+  workout_frequency: {
+    type: String,
+    enum: [
+      "Never",
+      "1–2 times per week",
+      "3–4 times per week",
+      "5–6 times per week",
+      "Daily"
+    ]
+  },
+  activeness_level: {
+    type: String,
+    enum: ["Sedentary", "Light", "Moderate", "High"]
+  },
+
+  // Metadata & Future proofing
+  // (Keeping your previous arrays in case they appear in later steps)
+  restrictions: [String], 
+  dislikes: [String],     
+  goals: [String],        
   created_at: { type: Date, default: Date.now }
 });
 

@@ -45,6 +45,15 @@ export default function ScanMeal() {
     window.__seefood_toast_scan_meal = window.setTimeout(() => setToast(""), 1700);
   }
 
+  function onPickFile(e) {
+    const picked = e.target.files?.[0];
+    if (!picked) return;
+    setFile(picked);
+    setPreviewUrl(URL.createObjectURL(picked));
+    setTelegramImageUrl(null);
+    setResult(null);
+  }
+
   function clearFile() {
     setFile(null);
     if (previewUrl && !telegramImageUrl) URL.revokeObjectURL(previewUrl);
@@ -203,7 +212,7 @@ export default function ScanMeal() {
                 <div className="dropzone-inner">
                   <div className="drop-emoji">📷</div>
                   <div className="drop-title">Drop your meal photo here</div>
-                  <div className="drop-text">or upload via Telegram below</div>
+                  <div className="drop-text">or choose a file from your device</div>
                 </div>
               )}
             </div>
@@ -238,6 +247,11 @@ export default function ScanMeal() {
             ) : null}
 
             <div className="upload-actions">
+              <label className="file-btn">
+                Choose file
+                <input type="file" accept="image/*" onChange={onPickFile} disabled={telegramStatus === "waiting"} />
+              </label>
+
               <button className="telegram-btn" onClick={openTelegramFlow} disabled={telegramStatus === "waiting"}>
                 📱 Upload from Telegram
               </button>

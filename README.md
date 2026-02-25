@@ -1,76 +1,6 @@
-# Getting Started with Create React App
+# iemDIP – SeeFood: Meal Analysis App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-# iemDIP – Meal Analysis Telegram Bot
-
-A Telegram bot that lets users photograph their meals (with a calibration card) and receive nutritional analysis via a Node.js/Express backend.
+SeeFood is an AI-powered web app and Telegram bot that helps you understand what you eat and plan meals using ingredients you already have.
 
 ---
 
@@ -78,6 +8,7 @@ A Telegram bot that lets users photograph their meals (with a calibration card) 
 
 ```
 iemDIP/
+├── src/          # React web frontend
 ├── bot/          # Telegram bot (Node.js, ESM)
 └── api/src/      # REST API backend (Express + MongoDB)
 ```
@@ -87,17 +18,68 @@ iemDIP/
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v18 or later
-- A [MongoDB Atlas](https://www.mongodb.com/atlas) cluster (or local MongoDB instance)
-- A Telegram account and the **Telegram** app on your phone
+- A [MongoDB Atlas](https://www.mongodb.com/atlas) cluster (or local MongoDB instance) — required only for the API backend
+- A Telegram account — required only for the bot and Telegram photo-upload feature
 
 ---
 
-## 1 – Create a Telegram Bot and Get Your Token
+## 1 – Test the Website (React Frontend)
 
-1. Open **Telegram** on your phone (or desktop) and search for **@BotFather**.
-2. Start a chat and send `/newbot`.
-3. Follow the prompts to choose a name and username for your bot.
-4. BotFather will reply with a **bot token** that looks like `123456789:ABCdef...`. Copy it.
+This is the quickest way to explore SeeFood without any backend setup.
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Start the development server
+
+```bash
+npm start
+```
+
+The app opens automatically at **[http://localhost:3000](http://localhost:3000)** (or `http://localhost:3001` if port 3000 is already in use by the API server).
+
+### Log in with the demo account
+
+On the **Login** page, use the pre-set demo credentials:
+
+| Field    | Value               |
+|----------|---------------------|
+| Email    | `test@seefood.com`  |
+| Password | `12345678`          |
+
+These credentials are shown on the Login page itself as a hint.
+
+### Pages you can explore
+
+| Page | URL | Notes |
+|------|-----|-------|
+| Welcome / Landing | `/` | Marketing page with feature overview |
+| Login | `/login` | Use the demo credentials above |
+| Sign Up | `/signup` | Form UI demo — does not write to a database |
+| Home | `/home` | Dashboard overview with placeholder macro data |
+| Scan Meal | `/scan-meal` | Upload a meal photo (or use Telegram) → see mock nutrition analysis |
+| Scan Ingredients | `/scan-ingredients` | Pick a local photo of your fridge → see mock recipe suggestions |
+| Dashboard | `/dashboard` | Nutrition summary charts |
+| History | `/history` | Meal history log |
+| Profile | `/profile` | User profile view |
+| Edit Profile | `/profile/edit` | Profile editing form |
+
+> **Note:** Scan Meal and Scan Ingredients return **mock / sample results** in the demo. Real AI analysis requires the API backend and (for Telegram photo upload) the bot to be running.
+
+### Scan Meal – quick demo steps
+
+1. Navigate to **Scan Meal** (`/scan-meal`).
+2. Click **"Choose file"** and pick any image from your computer, or use **"📱 Upload from Telegram"** if the bot is running.
+3. Click **Analyze** — the result panel shows a sample nutritional breakdown (Chicken quinoa bowl, 520 kcal).
+
+### Scan Ingredients – quick demo steps
+
+1. Navigate to **Scan Ingredients** (`/scan-ingredients`).
+2. Click **"Choose File"** and pick any image from your computer.
+3. Click **Analyze** — the result panel shows detected ingredients and three sample recipe suggestions.
 
 ---
 
@@ -129,9 +111,20 @@ node app.js
 
 The server will start on `http://localhost:3000`. You can verify it is running by visiting `http://localhost:3000/health` in your browser.
 
+> **Tip:** If you run the API on port 3000 and then start the React dev server with `npm start`, React will automatically use port 3001 to avoid the conflict.
+
 ---
 
-## 3 – Set Up the Telegram Bot
+## 3 – Create a Telegram Bot and Get Your Token
+
+1. Open **Telegram** on your phone (or desktop) and search for **@BotFather**.
+2. Start a chat and send `/newbot`.
+3. Follow the prompts to choose a name and username for your bot.
+4. BotFather will reply with a **bot token** that looks like `123456789:ABCdef...`. Copy it.
+
+---
+
+## 4 – Set Up the Telegram Bot
 
 Open a new terminal window:
 
@@ -169,10 +162,10 @@ Telegram bot running. Send /start in Telegram.
 
 ---
 
-## 4 – Test the Bot on Your Phone
+## 5 – Test the Bot on Your Phone
 
 1. Open the **Telegram** app on your phone.
-2. Search for your bot by the username you chose in Step 1 (e.g. `@MyMealBot`).
+2. Search for your bot by the username you chose in Step 3 (e.g. `@MyMealBot`).
 3. Tap **Start** or send the `/start` command.
 4. Follow the prompts:
    - Send `/login` and enter your registered username/email and password.
@@ -205,7 +198,10 @@ curl -X POST http://localhost:3000/users/register \
 
 | Problem | Solution |
 |---------|----------|
+| Website won't start | Run `npm install` from the project root first, then `npm start`. |
+| Port 3000 already in use | The API server occupies port 3000. The React app will auto-switch to port 3001 — just follow the URL shown in your terminal. |
+| Demo login fails | Make sure you are using `test@seefood.com` and `12345678` exactly (no extra spaces). |
 | `Missing TELEGRAM_TOKEN in .env` | Make sure `bot/.env` exists and contains your token from BotFather. |
 | Bot is not responding | Ensure `npm run dev` is running in the `bot/` directory and shows no errors. |
-| Login fails | Check that the API server is running and `API_URL` in `bot/.env` points to it correctly. |
+| Login fails on bot | Check that the API server is running and `API_URL` in `bot/.env` points to it correctly. |
 | MongoDB connection error | Verify your `MONGO_URI` in `api/src/.env` and that your Atlas cluster allows connections from your IP. |

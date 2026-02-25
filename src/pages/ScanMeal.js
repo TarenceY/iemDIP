@@ -1,16 +1,32 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/ScanMeal.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 export default function ScanMeal() {
   const navigate = useNavigate();
 
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [telegramImageUrl, setTelegramImageUrl] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [toast, setToast] = useState("");
+
+  // Telegram upload flow
+  const [showTelegramInput, setShowTelegramInput] = useState(false);
+  const [telegramUsername, setTelegramUsername] = useState("");
+  const [telegramStatus, setTelegramStatus] = useState("idle"); // idle | requesting | waiting | ready
+  const pollIntervalRef = useRef(null);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   const sampleResult = useMemo(
     () => ({
@@ -29,25 +45,23 @@ export default function ScanMeal() {
     window.__seefood_toast_scan_meal = window.setTimeout(() => setToast(""), 1700);
   }
 
-  function onPickFile(e) {
-    const picked = e.target.files?.[0];
-    if (!picked) return;
-
-    setFile(picked);
-    const url = URL.createObjectURL(picked);
-    setPreviewUrl(url);
-    setResult(null);
-  }
-
   function clearFile() {
     setFile(null);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrl && !telegramImageUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl("");
+    setTelegramImageUrl(null);
     setResult(null);
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    setTelegramStatus("idle");
+    setShowTelegramInput(false);
+    setTelegramUsername("");
   }
 
   async function analyze() {
-    if (!file) {
+    if (!file && !telegramImageUrl) {
       showToast("Please upload a meal photo first.");
       return;
     }
@@ -59,6 +73,70 @@ export default function ScanMeal() {
     setResult(sampleResult);
     setIsAnalyzing(false);
     showToast("Analysis complete ✅");
+  }
+
+  // --- Telegram upload flow ---
+
+  function openTelegramFlow() {
+    setShowTelegramInput(true);
+    setTelegramStatus("idle");
+  }
+
+  async function requestTelegramPhoto() {
+    const username = telegramUsername.trim();
+    if (!username) {
+      showToast("Please enter your Telegram username.");
+      return;
+    }
+
+    setTelegramStatus("requesting");
+
+    try {
+      const res = await fetch(`${API_URL}/telegram/request-photo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramUsername: username }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.message || "Failed to send request.");
+        setTelegramStatus("idle");
+        return;
+      }
+
+      const { requestId: newRequestId } = data;
+      setTelegramStatus("waiting");
+      showToast("📱 Check Telegram! Send a photo of your meal.");
+
+      // Poll for photo availability
+      pollIntervalRef.current = setInterval(async () => {
+        try {
+          const statusRes = await fetch(
+            `${API_URL}/telegram/photo-status/${newRequestId}`
+          );
+          const statusData = await statusRes.json();
+
+          if (statusData.status === "ready" && statusData.imageUrl) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+            setTelegramImageUrl(statusData.imageUrl);
+            setPreviewUrl(statusData.imageUrl);
+            setFile(null);
+            setTelegramStatus("ready");
+            setShowTelegramInput(false);
+            setResult(null);
+            showToast("✅ Photo received from Telegram!");
+          }
+        } catch (_) {
+          // Continue polling on transient errors
+        }
+      }, 3000);
+    } catch (err) {
+      showToast("Failed to connect to the server.");
+      setTelegramStatus("idle");
+    }
   }
 
   function saveToHistory() {
@@ -113,7 +191,9 @@ export default function ScanMeal() {
           <div className="panel">
             <div className="panel-head">
               <h2>Upload</h2>
-              <span className="pill">{file ? "1 file selected" : "No file"}</span>
+              <span className="pill">
+                {file || telegramImageUrl ? "1 file selected" : "No file"}
+              </span>
             </div>
 
             <div className={`dropzone ${previewUrl ? "has-preview" : ""}`}>
@@ -123,22 +203,50 @@ export default function ScanMeal() {
                 <div className="dropzone-inner">
                   <div className="drop-emoji">📷</div>
                   <div className="drop-title">Drop your meal photo here</div>
-                  <div className="drop-text">or choose a file from your device</div>
+                  <div className="drop-text">or upload via Telegram below</div>
                 </div>
               )}
             </div>
 
-            <div className="upload-actions">
-              <label className="file-btn">
-                Choose file
-                <input type="file" accept="image/*" onChange={onPickFile} />
-              </label>
+            {/* Telegram upload section */}
+            {showTelegramInput ? (
+              <div className="telegram-section">
+                <label className="telegram-label">Your Telegram username</label>
+                <div className="telegram-row">
+                  <input
+                    className="telegram-input"
+                    type="text"
+                    placeholder="@username"
+                    value={telegramUsername}
+                    onChange={(e) => setTelegramUsername(e.target.value)}
+                    disabled={telegramStatus === "waiting"}
+                  />
+                  <button
+                    className="primary-btn"
+                    onClick={requestTelegramPhoto}
+                    disabled={telegramStatus === "requesting" || telegramStatus === "waiting"}
+                  >
+                    {telegramStatus === "waiting" ? "Waiting…" : "Request Photo"}
+                  </button>
+                </div>
+                {telegramStatus === "waiting" && (
+                  <div className="telegram-hint">
+                    📱 Open Telegram and send your meal photo to the SeeFood bot.
+                  </div>
+                )}
+              </div>
+            ) : null}
 
-              <button className="ghost-btn" onClick={clearFile} disabled={!file}>
+            <div className="upload-actions">
+              <button className="telegram-btn" onClick={openTelegramFlow} disabled={telegramStatus === "waiting"}>
+                📱 Upload from Telegram
+              </button>
+
+              <button className="ghost-btn" onClick={clearFile} disabled={!file && !telegramImageUrl && telegramStatus !== "waiting"}>
                 Clear
               </button>
 
-              <button className="primary-btn" onClick={analyze} disabled={isAnalyzing || !file}>
+              <button className="primary-btn" onClick={analyze} disabled={isAnalyzing || (!file && !telegramImageUrl)}>
                 {isAnalyzing ? "Analyzing..." : "Analyze"}
               </button>
             </div>

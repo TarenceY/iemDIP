@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
-import { sendPhotoToApi, getPendingRequests, markNotified, uploadPhotoToApi } from "./services/apiClient.js";
+import { sendPhotoToApi } from "./services/apiClient.js";
 import { loginUser } from "./services/authService.js";
 
 dotenv.config(); // reads .env at repo root or bot/.env
@@ -17,26 +17,18 @@ const bot = new TelegramBot(token, { polling: true });
 /**
  * In-memory session store.
  * Key: chatId (number)
- * Value: { state: string, pendingUsername?: string, userId?: string, username?: string,
- *          pendingPhotoRequestId?: string }
+ * Value: { state: string, pendingUsername?: string, userId?: string, username?: string }
  *
  * States:
  *   "idle"              – not logged in, no active login flow
  *   "awaiting_username" – bot has asked the user for their username / email
  *   "awaiting_password" – bot has received username and is waiting for password
  *   "authenticated"     – user is logged in
- *   "awaiting_photo"    – bot has asked the user to send a meal photo (webapp flow)
  *
  * Note: Sessions are stored in memory and will be cleared on bot restart.
  * Users will need to log in again after a restart.
  */
 const sessions = new Map();
-
-/**
- * Maps Telegram @username (lowercase, no @) → chatId.
- * Populated whenever a user sends /start.
- */
-const usernameToChat = new Map();
 
 function getSession(chatId) {
   if (!sessions.has(chatId)) {
@@ -54,11 +46,6 @@ function isAuthenticated(chatId) {
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const session = getSession(chatId);
-
-  // Register Telegram username → chatId so the webapp can reach this user
-  if (msg.from?.username) {
-    usernameToChat.set(msg.from.username.toLowerCase(), chatId);
-  }
 
   if (session.state === "authenticated") {
     bot.sendMessage(chatId,
@@ -168,26 +155,6 @@ bot.on("photo", async (msg) => {
 
   // Get the highest-resolution photo
   const best = photos[photos.length - 1];
-  const session = getSession(chatId);
-
-  // Webapp Telegram-upload flow: forward photo to the API for S3 storage
-  if (session.pendingPhotoRequestId) {
-    bot.sendMessage(chatId, "📤 Got your photo! Uploading to the app...");
-    const requestId = session.pendingPhotoRequestId;
-
-    try {
-      await uploadPhotoToApi(bot, best.file_id, requestId, API_URL);
-      session.state = "authenticated";
-      delete session.pendingPhotoRequestId;
-      bot.sendMessage(chatId, "✅ Photo uploaded! You can now view and analyze it in the app.");
-    } catch (err) {
-      console.error("Photo upload failed:", err.message);
-      bot.sendMessage(chatId, "❌ Upload failed. Please try again.");
-    }
-    return;
-  }
-
-  // Standard flow: analyze the meal
   bot.sendMessage(chatId, "Got your photo. Analyzing...");
 
   try {
@@ -199,36 +166,5 @@ bot.on("photo", async (msg) => {
     await bot.sendMessage(chatId, "Sorry—analysis failed. Please try again.");
   }
 });
-
-/**
- * Poll the API every 5 seconds for pending photo requests from the webapp.
- * When a request arrives for a logged-in user, prompt them to send a photo.
- */
-setInterval(async () => {
-  try {
-    const requests = await getPendingRequests(API_URL);
-    for (const req of requests) {
-      const chatId = usernameToChat.get(req.telegramUsername.toLowerCase());
-      if (!chatId) continue; // User has not started the bot yet
-
-      const session = getSession(chatId);
-      if (session.state !== "authenticated") continue; // User not logged in
-      if (session.pendingPhotoRequestId) continue; // Already handling a request
-
-      // Mark the request so we don't re-send it
-      await markNotified(req.requestId, API_URL);
-
-      session.state = "awaiting_photo";
-      session.pendingPhotoRequestId = req.requestId;
-
-      bot.sendMessage(
-        chatId,
-        "📸 The SeeFood app is waiting for your meal photo!\nPlease send a photo of your meal here and it will appear in the app."
-      );
-    }
-  } catch (_) {
-    // API may not be running; silently continue
-  }
-}, 5000);
 
 console.log("Telegram bot running. Send /start in Telegram.");

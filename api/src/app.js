@@ -3,14 +3,20 @@ require("dotenv").config();
 console.log("Starting server...");
 
 const express = require("express");
+const cors = require("cors");
 const app = express();
 
 // Load MongoDB connection
 const db = require("./database");
 
+app.use(cors());
 app.use(express.json());
+
 const usersRoutes = require("./routes/users");
 app.use("/users", usersRoutes);
+
+const telegramRoutes = require("./routes/telegram");
+app.use("/telegram", telegramRoutes);
 
 const PORT = process.env.PORT || 3000;
 

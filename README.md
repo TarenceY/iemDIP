@@ -191,6 +191,28 @@ curl -X POST http://localhost:3000/users/register \
 
 ---
 
+## 5 – Test the Webapp → Bot Integration
+
+The **Scan Meal** page in the web app calls the same `/analyze` API endpoint used by the bot. You can receive the analysis result in Telegram directly from the webapp button:
+
+1. Start both the API server and the Telegram bot (steps 2 & 3 above).
+2. Start the React webapp:
+
+   ```bash
+   cd <repo-root>
+   npm start
+   ```
+
+3. Open `http://localhost:3000` in your browser and navigate to **Scan Meal**.
+4. Find your **Telegram Chat ID** by messaging [@userinfobot](https://t.me/userinfobot) in Telegram.
+5. Enter your Chat ID in the **Telegram Chat ID** field on the Scan Meal page.
+6. Upload a meal photo and click **Analyze**.
+7. The nutritional result will appear on the page **and** be sent to you via the Telegram bot.
+
+> **Tip:** If you previously logged into the bot (`/login`), your Telegram Chat ID is automatically linked to your account. In that case, enter your `userId` (returned from `/users/login`) in the webapp to receive notifications without filling in the Chat ID field.
+
+---
+
 ## Available Bot Commands
 
 | Command   | Description                          |
@@ -208,4 +230,6 @@ curl -X POST http://localhost:3000/users/register \
 | `Missing TELEGRAM_TOKEN in .env` | Make sure `bot/.env` exists and contains your token from BotFather. |
 | Bot is not responding | Ensure `npm run dev` is running in the `bot/` directory and shows no errors. |
 | Login fails | Check that the API server is running and `API_URL` in `bot/.env` points to it correctly. |
+| Webapp Analyze button shows "Is the API running?" | Start the API server (`node app.js` in `api/src/`) and ensure `REACT_APP_API_URL` points to it (default: `http://localhost:3000`). |
+| No Telegram notification from webapp | Ensure `TELEGRAM_TOKEN` is set in `api/src/.env` and the Chat ID field is filled in on the Scan Meal page. |
 | MongoDB connection error | Verify your `MONGO_URI` in `api/src/.env` and that your Atlas cluster allows connections from your IP. |

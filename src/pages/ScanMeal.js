@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "../styles/ScanMeal.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
 export default function ScanMeal() {
   const navigate = useNavigate();
 
@@ -11,17 +13,9 @@ export default function ScanMeal() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [toast, setToast] = useState("");
+  const [chatId, setChatId] = useState(localStorage.getItem("seefood_telegram_chat_id") || "");
 
-  const sampleResult = useMemo(
-    () => ({
-      name: "Chicken quinoa bowl",
-      calories: 520,
-      macros: { protein: 38, carbs: 54, fats: 16 },
-      highlights: ["High protein", "Balanced carbs", "Good fiber"],
-      suggestions: ["Add more greens for micronutrients", "Choose low-sugar sauce"],
-    }),
-    []
-  );
+  const userId = useMemo(() => localStorage.getItem("seefood_user_id") || "", []);
 
   function showToast(msg) {
     setToast(msg);
@@ -46,6 +40,16 @@ export default function ScanMeal() {
     setResult(null);
   }
 
+  function onChatIdChange(e) {
+    const val = e.target.value.trim();
+    setChatId(val);
+    if (val) {
+      localStorage.setItem("seefood_telegram_chat_id", val);
+    } else {
+      localStorage.removeItem("seefood_telegram_chat_id");
+    }
+  }
+
   async function analyze() {
     if (!file) {
       showToast("Please upload a meal photo first.");
@@ -53,12 +57,35 @@ export default function ScanMeal() {
     }
     setIsAnalyzing(true);
 
-    // Mock delay (replace with API call later)
-    await new Promise((r) => setTimeout(r, 900));
+    try {
+      // Convert image to base64 for the API request
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-    setResult(sampleResult);
-    setIsAnalyzing(false);
-    showToast("Analysis complete ✅");
+      const body = { image: base64 };
+      if (userId) body.userId = userId;
+      if (chatId) body.chatId = chatId;
+
+      const resp = await fetch(`${API_URL}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+      const data = await resp.json();
+      setResult(data);
+      showToast(chatId ? "Analysis complete ✅ – check Telegram!" : "Analysis complete ✅");
+    } catch (err) {
+      console.error(err);
+      showToast("Analysis failed. Is the API running?");
+    } finally {
+      setIsAnalyzing(false);
+    }
   }
 
   function saveToHistory() {
@@ -145,6 +172,27 @@ export default function ScanMeal() {
 
             <div className="hint">
               Tip: Use a clear photo in good lighting for better results.
+            </div>
+
+            <div className="hint" style={{ marginTop: "0.5rem" }}>
+              <label htmlFor="chatId-input" style={{ display: "block", marginBottom: "0.25rem" }}>
+                📬 Telegram Chat ID <span style={{ fontWeight: 400 }}>(optional – receive results in Telegram)</span>
+              </label>
+              <input
+                id="chatId-input"
+                type="text"
+                placeholder="e.g. 123456789 – message @userinfobot to find yours"
+                value={chatId}
+                onChange={onChatIdChange}
+                style={{
+                  width: "100%",
+                  padding: "0.4rem 0.6rem",
+                  borderRadius: "6px",
+                  border: "1px solid #d1d5db",
+                  fontSize: "0.85rem",
+                  boxSizing: "border-box",
+                }}
+              />
             </div>
           </div>
 

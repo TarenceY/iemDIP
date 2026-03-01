@@ -67,10 +67,11 @@ exports.login = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { age, gender, restrictions, dislikes, goals } = req.body;
+    const { age, gender, restrictions, dislikes, goals, telegramChatId } = req.body;
     const userId = req.params.id;
 
     const updates = { age, gender, restrictions, dislikes, goals };
+    if (telegramChatId !== undefined) updates.telegramChatId = telegramChatId;
 
     const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!user) return res.status(404).json({ message: "User not found" });

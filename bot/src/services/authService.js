@@ -14,3 +14,11 @@ export async function loginUser(usernameOrEmail, password, API_URL) {
   const response = await axios.post(`${API_URL}/users/login`, payload);
   return response.data;
 }
+
+/**
+ * Link a Telegram chatId to the user's account so the API can send
+ * Telegram notifications when the webapp's Analyze button is used.
+ */
+export async function linkTelegramChatId(userId, chatId, API_URL) {
+  await axios.put(`${API_URL}/users/profile/${userId}`, { telegramChatId: String(chatId) });
+}

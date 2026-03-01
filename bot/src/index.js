@@ -1,7 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
 import { sendPhotoToApi } from "./services/apiClient.js";
-import { loginUser } from "./services/authService.js";
+import { loginUser, linkTelegramChatId } from "./services/authService.js";
 
 dotenv.config(); // reads .env at repo root or bot/.env
 const token = process.env.TELEGRAM_TOKEN;
@@ -119,6 +119,13 @@ bot.on("message", async (msg) => {
       session.userId = result.userId;
       session.username = result.username;
       delete session.pendingUsername;
+
+      // Link this Telegram chat to the user account so the webapp can notify via bot
+      try {
+        await linkTelegramChatId(result.userId, chatId, API_URL);
+      } catch (linkErr) {
+        console.warn("Could not link Telegram chat ID:", linkErr.message);
+      }
 
       bot.sendMessage(chatId,
         `✅ Login successful! Welcome, ${result.username}.\n\nYou can now send me a photo of your meal with the calibration card for analysis.`

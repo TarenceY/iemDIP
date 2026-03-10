@@ -2,10 +2,6 @@ import "../styles/Welcome.css";
 import { useNavigate } from "react-router-dom";
 import readyMeal from "../assets/images/features/ready-meal.jpg";
 import rawIngredients from "../assets/images/features/raw-ingredients.jpg";
-import smartDecisions from "../assets/images/features/smart-decisions.jpg";
-import aiInsights from "../assets/images/features/ai-insights.jpg";
-import healthyEating from "../assets/images/features/healthy-eating.jpg";
-import lessWaste from "../assets/images/features/less-waste.jpg";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
 
@@ -218,8 +214,8 @@ export default function Welcome() {
       </div>
 
       <div className="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms</a>
       </div>
     </footer>
 

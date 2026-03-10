@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
   restrictions: [String], // array of dietary restrictions
   dislikes: [String],     // array of dislikes
   goals: [String],        // array of goals
-  telegramChatId: String, // linked Telegram chat ID for bot notifications
+  telegramChatId: String,    // linked Telegram chat ID for bot notifications
+  telegramUsername: String,  // Telegram @username (without @), used to look up chatId
   created_at: { type: Date, default: Date.now }
 });
 

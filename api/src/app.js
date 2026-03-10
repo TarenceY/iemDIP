@@ -24,6 +24,9 @@ app.use(express.raw({ type: "application/octet-stream", limit: "10mb" }));
 const usersRoutes = require("./routes/users");
 app.use("/users", usersRoutes);
 
+const telegramRoutes = require("./routes/telegram");
+app.use("/telegram", telegramRoutes);
+
 const rateLimit = require("express-rate-limit");
 const analyzeLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute

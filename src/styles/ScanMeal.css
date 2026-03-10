@@ -387,3 +387,110 @@
   font-size: 13px;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
 }
+
+/* ── Telegram upload section ──────────────────────────────────────────── */
+.tg-upload-section {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.tg-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 14px;
+  color: #1d4ed8;
+  margin-bottom: 10px;
+}
+
+.tg-icon {
+  font-size: 16px;
+}
+
+.tg-input-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tg-username-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  font-size: 14px;
+  background: #fff;
+  outline: none;
+}
+
+.tg-username-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.tg-username-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tg-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tg-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.tg-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tg-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #1e40af;
+  margin-bottom: 0;
+}
+
+/* ── Divider between Telegram and file-pick ───────────────────────────── */
+.upload-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 10px;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.upload-divider::before,
+.upload-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* Pulsing spinner for "waiting for Telegram" state */
+@keyframes tg-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.tg-spin {
+  animation: tg-pulse 1.4s ease-in-out infinite;
+}

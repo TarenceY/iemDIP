@@ -191,9 +191,54 @@ curl -X POST http://localhost:3000/users/register \
 
 ---
 
-## 5 – Test the Webapp → Bot Integration
+## 5 – Test the Telegram → Webapp Photo Upload Flow
 
-The **Scan Meal** page in the web app calls the same `/analyze` API endpoint used by the bot. You can receive the analysis result in Telegram directly from the webapp button:
+This is the **new** flow where the webapp requests a photo via Telegram and shows it in the browser.
+
+### Prerequisites
+
+Make sure you have completed steps 1–4 and:
+- The API server is running (`node app.js` in `api/src/`)
+- The Telegram bot is running (`npm run dev` in `bot/`)
+- The React webapp is running (`npm start` in the repo root)
+
+### Step-by-step
+
+1. **Log in to the bot on your phone first** (this links your Telegram account to your SeeFood profile):
+   - Open Telegram → search for your bot → send `/login`
+   - Enter your SeeFood username/email and password
+   - You should see "✅ Login successful!"
+
+2. **Open the Scan Meal page** in your browser at `http://localhost:3001` (the React app runs on 3001 when the API is already on 3000).
+
+3. In the **"Upload from Telegram"** section, type your **Telegram username** (with or without the `@`).
+
+4. Click **"Request photo"**.
+   - The webapp tells the API to send you a Telegram message.
+   - Your phone receives a Telegram message: *"📸 SeeFood Webapp is requesting a meal photo! Please send a photo of your meal now…"*
+
+5. **Send a photo of your meal** in the Telegram chat.
+   - The bot detects the pending request, uploads the photo to the API (stored locally in `api/src/uploads/` when S3 is not configured).
+   - The bot replies: *"✅ Photo uploaded! Switch back to the webapp to see it."*
+
+6. The webapp is polling in the background and **automatically shows the uploaded photo** in the preview area within a couple of seconds.
+
+7. Click **"Analyze"** to run the nutritional analysis on the uploaded photo.
+
+> **Tip:** By default, photos are stored on the local filesystem (`api/src/uploads/`).  
+> To use **AWS S3** instead, add your credentials to `api/src/.env`:
+> ```env
+> AWS_REGION=ap-southeast-1
+> AWS_ACCESS_KEY_ID=AKIA...
+> AWS_SECRET_ACCESS_KEY=...
+> AWS_S3_BUCKET=your-bucket-name
+> ```
+
+---
+
+## 5b – Test the Webapp → Bot Integration (classic flow)
+
+The **Scan Meal** page also supports the classic flow where you upload a photo directly from your device:
 
 1. Start both the API server and the Telegram bot (steps 2 & 3 above).
 2. Start the React webapp:

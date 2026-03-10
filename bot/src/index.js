@@ -1,6 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
+import axios from "axios";
 import dotenv from "dotenv";
-import { sendPhotoToApi } from "./services/apiClient.js";
+import { sendPhotoToApi, uploadPhotoForRequest } from "./services/apiClient.js";
 import { loginUser, linkTelegramChatId } from "./services/authService.js";
 
 dotenv.config(); // reads .env at repo root or bot/.env
@@ -122,7 +123,8 @@ bot.on("message", async (msg) => {
 
       // Link this Telegram chat to the user account so the webapp can notify via bot
       try {
-        await linkTelegramChatId(result.userId, chatId, API_URL);
+        const telegramUsername = msg.from?.username || null;
+        await linkTelegramChatId(result.userId, chatId, telegramUsername, API_URL);
       } catch (linkErr) {
         console.warn("Could not link Telegram chat ID:", linkErr.message);
       }
@@ -162,6 +164,31 @@ bot.on("photo", async (msg) => {
 
   // Get the highest-resolution photo
   const best = photos[photos.length - 1];
+
+  // Check if the webapp is waiting for a photo upload for this chat
+  try {
+    const checkResp = await axios.get(`${API_URL}/telegram/photo-status/pending-check`, {
+      params: { chatId },
+      validateStatus: () => true,
+    });
+
+    if (checkResp.status === 200 && checkResp.data?.hasPending) {
+      // A webapp photo request is pending – upload the photo to fulfil it
+      bot.sendMessage(chatId, "📸 Got it! Uploading your photo to the webapp...");
+      try {
+        await uploadPhotoForRequest(bot, best.file_id, chatId, API_URL);
+        await bot.sendMessage(chatId, "✅ Photo uploaded! Switch back to the webapp to see it.");
+      } catch (uploadErr) {
+        console.error("Photo upload for request failed:", uploadErr.message);
+        await bot.sendMessage(chatId, "❌ Upload failed. Please try again from the webapp.");
+      }
+      return;
+    }
+  } catch (_) {
+    // If the check fails (e.g. API not reachable), fall through to normal analysis
+  }
+
+  // No pending request – do the normal meal analysis flow
   bot.sendMessage(chatId, "Got your photo. Analyzing...");
 
   try {

@@ -15,6 +15,20 @@
   --shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
 }
 
+/*
+ * Reserve a stable gutter for the scrollbar on every page so that
+ * the centered layout does NOT shift left/right when a scrollbar
+ * appears or disappears while navigating between pages.
+ * body { margin: 0 } overrides the browser's default 8px body margin.
+ */
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+}
+
 /* ---- Page shell ---- */
 .app-shell {
   min-height: 100vh;

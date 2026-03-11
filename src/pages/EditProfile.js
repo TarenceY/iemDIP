@@ -64,7 +64,7 @@ export default function EditProfile() {
         dislikes: profile.dislikes,
         goals: profile.goals,
       };
-      if (profile.age !== "" && profile.age != null) updates.age = Number(profile.age);
+      if (profile.age !== "" && profile.age !== null) updates.age = Number(profile.age);
       await updateProfile(userId, updates);
       navigate("/profile");
     } catch (err) {

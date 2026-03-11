@@ -1,117 +1,56 @@
-# Getting Started with Create React App
+# SeeFood – AI Meal Nutrition Analyser
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**SeeFood** is a full-stack web + Telegram bot application that lets users photograph their meals and receive AI-powered nutritional analysis.
 
-## Available Scripts
+## Tech Stack
 
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-# iemDIP – Meal Analysis Telegram Bot
-
-A Telegram bot that lets users photograph their meals (with a calibration card) and receive nutritional analysis via a Node.js/Express backend.
-
----
+| Layer | Technology |
+|-------|-----------|
+| **Frontend (webapp)** | React (Create React App) |
+| **API Backend** | Node.js + Express + MongoDB (Mongoose) |
+| **Telegram Bot** | Node.js (`node-telegram-bot-api`) |
+| **AI Pipeline** | Python (FastAPI + YOLOv8 + Google Gemini) |
+| **Photo Storage** | AWS S3 (or local filesystem fallback) |
 
 ## Project Structure
 
 ```
 iemDIP/
-├── bot/          # Telegram bot (Node.js, ESM)
-└── api/src/      # REST API backend (Express + MongoDB)
+├── src/              # React frontend (webapp)
+├── api/src/          # Express REST API + MongoDB models
+├── bot/src/          # Telegram bot
+└── ai/               # Python AI pipeline (FastAPI + YOLOv8 + Gemini)
 ```
 
 ---
 
-## Prerequisites
+## Local Development Setup
+
+You will need **three terminal windows** running simultaneously: the API server, the Telegram bot, and the React webapp.
+
+### Prerequisites
 
 - [Node.js](https://nodejs.org/) v18 or later
-- A [MongoDB Atlas](https://www.mongodb.com/atlas) cluster (or local MongoDB instance)
-- A Telegram account and the **Telegram** app on your phone
+- [Python](https://www.python.org/) 3.9+ (for the AI pipeline, optional for basic testing)
+- A [MongoDB Atlas](https://www.mongodb.com/atlas) cluster **or** a local MongoDB instance
+- A Telegram account and phone with the Telegram app
 
 ---
 
-## 1 – Create a Telegram Bot and Get Your Token
+### Step 1 – Create a Telegram Bot Token
 
-1. Open **Telegram** on your phone (or desktop) and search for **@BotFather**.
-2. Start a chat and send `/newbot`.
-3. Follow the prompts to choose a name and username for your bot.
-4. BotFather will reply with a **bot token** that looks like `123456789:ABCdef...`. Copy it.
+1. Open Telegram, search for **@BotFather**, and start a chat.
+2. Send `/newbot` and follow the prompts to pick a name and username.
+3. Copy the **bot token** that BotFather gives you (format: `123456789:ABCdef...`).
 
 ---
 
-## 2 – Set Up the API Backend
+### Step 2 – Configure Environment Variables
+
+**API backend (`api/src/.env`)**
 
 ```bash
-cd api/src
-npm install
-```
-
-Copy the example environment file and fill in your values:
-
-```bash
-cp .env.example .env
+cp api/src/.env.example api/src/.env
 ```
 
 Edit `api/src/.env`:
@@ -119,45 +58,64 @@ Edit `api/src/.env`:
 ```env
 MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?appName=DIP
 PORT=3000
+TELEGRAM_TOKEN=<your-bot-token>
+
+# Optional – AWS S3 for photo storage (leave blank to use local filesystem)
+AWS_REGION=ap-southeast-1
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_S3_BUCKET=
+
+# Public URL of this API (used when building local photo URLs)
+PUBLIC_API_URL=http://localhost:3000
 ```
 
-Start the API server:
+**React webapp (`.env.local` in the repo root)**
 
 ```bash
-node app.js
+cp .env.example .env.local
 ```
 
-The server will start on `http://localhost:3000`. You can verify it is running by visiting `http://localhost:3000/health` in your browser.
+The default is already correct for local development:
+
+```env
+REACT_APP_API_URL=http://localhost:3000
+```
+
+**Telegram bot (`bot/.env`)**
+
+```bash
+cp bot/.env.example bot/.env
+```
+
+Edit `bot/.env`:
+
+```env
+TELEGRAM_TOKEN=<your-bot-token>
+API_URL=http://localhost:3000
+```
 
 ---
 
-## 3 – Set Up the Telegram Bot
+### Step 3 – Start the API Server
 
-Open a new terminal window:
+```bash
+cd api/src
+npm install
+npm start          # or: node app.js
+```
+
+Open `http://localhost:3000/health` to verify the API is running and MongoDB is connected.
+
+---
+
+### Step 4 – Start the Telegram Bot
+
+Open a **new terminal**:
 
 ```bash
 cd bot
 npm install
-```
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-Edit `bot/.env` and paste the token you received from BotFather:
-
-```env
-TELEGRAM_TOKEN=123456789:ABCdef...
-API_URL=http://localhost:3000
-```
-
-> **Note:** If your API server is running on a different host or port, update `API_URL` accordingly.
-
-Start the bot:
-
-```bash
 npm run dev
 ```
 
@@ -169,96 +127,67 @@ Telegram bot running. Send /start in Telegram.
 
 ---
 
-## 4 – Test the Bot on Your Phone
+### Step 5 – Start the React Webapp
 
-1. Open the **Telegram** app on your phone.
-2. Search for your bot by the username you chose in Step 1 (e.g. `@MyMealBot`).
-3. Tap **Start** or send the `/start` command.
-4. Follow the prompts:
-   - Send `/login` and enter your registered username/email and password.
-   - Once logged in, send a photo of your meal with the calibration card.
-   - The bot will reply with the nutritional analysis.
-
-### Register an Account First
-
-Before logging in through the bot, you need a user account. You can create one by sending a `POST` request to the API:
+Open a **new terminal** in the repo root:
 
 ```bash
-curl -X POST http://localhost:3000/users/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "yourname", "email": "you@example.com", "password": "yourpassword"}'
+npm install
+npm start
 ```
 
+> React's dev server automatically uses port **3001** when port 3000 is already taken by the API.
+
+Open `http://localhost:3001` in your browser.
+
 ---
 
-## 5 – Test the Telegram → Webapp Photo Upload Flow
+## Testing the Full Flow
 
-This is the **new** flow where the webapp requests a photo via Telegram and shows it in the browser.
+### A – Register & Log In via the Webapp
 
-### Prerequisites
+1. Browse to `http://localhost:3001`.
+2. Click **Sign Up** and create an account (email, username, password, etc.).
+3. After registration you are redirected to **Log In**.
+4. Enter your email and password – on success the app stores your `userId` in `localStorage` and redirects to the Home page.
 
-Make sure you have completed steps 1–4 and:
-- The API server is running (`node app.js` in `api/src/`)
-- The Telegram bot is running (`npm run dev` in `bot/`)
-- The React webapp is running (`npm start` in the repo root)
+---
 
-### Step-by-step
+### B – Link Your Telegram Account
 
-1. **Log in to the bot on your phone first** (this links your Telegram account to your SeeFood profile):
-   - Open Telegram → search for your bot → send `/login`
-   - Enter your SeeFood username/email and password
-   - You should see "✅ Login successful!"
+Before using the Telegram upload feature, your Telegram account must be linked to your SeeFood profile.
 
-2. **Open the Scan Meal page** in your browser at `http://localhost:3001` (the React app runs on 3001 when the API is already on 3000).
+1. Open **Telegram** on your phone and find your bot (the username you chose in Step 1).
+2. Send `/start`, then `/login`.
+3. Enter your SeeFood username (or email) and password.
+4. On success the bot stores your Telegram `chatId` against your account in MongoDB.
 
-3. In the **"Upload from Telegram"** section, type your **Telegram username** (with or without the `@`).
+---
 
-4. Click **"Request photo"**.
-   - The webapp tells the API to send you a Telegram message.
-   - Your phone receives a Telegram message: *"📸 SeeFood Webapp is requesting a meal photo! Please send a photo of your meal now…"*
+### C – Upload a Meal Photo via Telegram (New Flow)
 
-5. **Send a photo of your meal** in the Telegram chat.
-   - The bot detects the pending request, uploads the photo to the API (stored locally in `api/src/uploads/` when S3 is not configured).
+1. Open the webapp and navigate to **Scan Meal**.
+2. In the **"Upload from Telegram"** section, type your **Telegram username** (with or without the `@`).
+3. Click **"Request photo"**.
+   - The webapp calls the API, which sends you a Telegram message: *"📸 SeeFood Webapp is requesting a meal photo!"*
+4. **Send a photo of your meal** in the Telegram chat.
+   - The bot detects the pending request and forwards the photo to the API.
+   - The photo is stored in `api/src/uploads/` (or AWS S3 if configured).
    - The bot replies: *"✅ Photo uploaded! Switch back to the webapp to see it."*
-
-6. The webapp is polling in the background and **automatically shows the uploaded photo** in the preview area within a couple of seconds.
-
-7. Click **"Analyze"** to run the nutritional analysis on the uploaded photo.
-
-> **Tip:** By default, photos are stored on the local filesystem (`api/src/uploads/`).  
-> To use **AWS S3** instead, add your credentials to `api/src/.env`:
-> ```env
-> AWS_REGION=ap-southeast-1
-> AWS_ACCESS_KEY_ID=AKIA...
-> AWS_SECRET_ACCESS_KEY=...
-> AWS_S3_BUCKET=your-bucket-name
-> ```
+5. The webapp polls in the background and **automatically shows the photo** in the preview area within ~2 seconds.
+6. Click **"Analyze"** to run the AI nutritional analysis.
 
 ---
 
-## 5b – Test the Webapp → Bot Integration (classic flow)
+### D – Upload a Meal Photo Directly from Your Device
 
-The **Scan Meal** page also supports the classic flow where you upload a photo directly from your device:
-
-1. Start both the API server and the Telegram bot (steps 2 & 3 above).
-2. Start the React webapp:
-
-   ```bash
-   cd <repo-root>
-   npm start
-   ```
-
-3. Open `http://localhost:3000` in your browser and navigate to **Scan Meal**.
-4. Find your **Telegram Chat ID** by messaging [@userinfobot](https://t.me/userinfobot) in Telegram.
-5. Enter your Chat ID in the **Telegram Chat ID** field on the Scan Meal page.
-6. Upload a meal photo and click **Analyze**.
-7. The nutritional result will appear on the page **and** be sent to you via the Telegram bot.
-
-> **Tip:** If you previously logged into the bot (`/login`), your Telegram Chat ID is automatically linked to your account. In that case, enter your `userId` (returned from `/users/login`) in the webapp to receive notifications without filling in the Chat ID field.
+1. On the **Scan Meal** page, use the **"Choose file"** button to pick a photo from your computer.
+2. Click **"Analyze"**.
+3. The result panel shows calories, macros, highlights, and suggestions.
 
 ---
 
-## Available Bot Commands
+## Available Telegram Bot Commands
 
 | Command   | Description                          |
 |-----------|--------------------------------------|
@@ -273,8 +202,9 @@ The **Scan Meal** page also supports the classic flow where you upload a photo d
 | Problem | Solution |
 |---------|----------|
 | `Missing TELEGRAM_TOKEN in .env` | Make sure `bot/.env` exists and contains your token from BotFather. |
-| Bot is not responding | Ensure `npm run dev` is running in the `bot/` directory and shows no errors. |
-| Login fails | Check that the API server is running and `API_URL` in `bot/.env` points to it correctly. |
-| Webapp Analyze button shows "Is the API running?" | Start the API server (`node app.js` in `api/src/`) and ensure `REACT_APP_API_URL` points to it (default: `http://localhost:3000`). |
-| No Telegram notification from webapp | Ensure `TELEGRAM_TOKEN` is set in `api/src/.env` and the Chat ID field is filled in on the Scan Meal page. |
-| MongoDB connection error | Verify your `MONGO_URI` in `api/src/.env` and that your Atlas cluster allows connections from your IP. |
+| Bot is not responding | Ensure `npm run dev` is running in `bot/` and shows no errors. |
+| Login fails on webapp | Check the API server is running at `http://localhost:3000` and `REACT_APP_API_URL` in `.env.local` is correct. |
+| Webapp Analyze shows "Is the API running?" | Start the API server (`npm start` in `api/src/`) and verify `REACT_APP_API_URL=http://localhost:3000` in `.env.local`. |
+| Telegram upload fails with 404 | Make sure you logged into the bot (`/login`) first so your chatId is linked to your account. |
+| MongoDB connection error | Verify `MONGO_URI` in `api/src/.env` and that your Atlas cluster allows connections from your IP. |
+| Photo not appearing in webapp | Check the `api/src/uploads/` directory exists and the API server has write permissions. |

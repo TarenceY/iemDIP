@@ -5,14 +5,18 @@ exports.register = async (req, res) => {
   try {
     const { username, email, password, age, gender, restrictions, dislikes, goals } = req.body;
 
+    // Normalise email and username to avoid duplicates caused by case differences
+    const normalisedEmail = typeof email === "string" ? email.trim().toLowerCase() : email;
+    const normalisedUsername = typeof username === "string" ? username.trim() : username;
+
     // Check if email already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalisedEmail });
     if (existingUser) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
     // Check if username already exists
-    const existingUsername = await User.findOne({ username });
+    const existingUsername = await User.findOne({ username: normalisedUsername });
     if (existingUsername) {
       return res.status(400).json({ message: "Username already taken" });
     }
@@ -20,8 +24,8 @@ exports.register = async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
 
     const user = new User({
-      username,
-      email,
+      username: normalisedUsername,
+      email: normalisedEmail,
       password_hash,
       age,
       gender,
@@ -44,12 +48,12 @@ exports.login = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Allow login by username or email
+    // Allow login by username or email (normalise for consistent lookup)
     let user;
     if (email) {
-      user = await User.findOne({ email });
+      user = await User.findOne({ email: email.trim().toLowerCase() });
     } else if (username) {
-      user = await User.findOne({ username });
+      user = await User.findOne({ username: username.trim() });
     } else {
       return res.status(400).json({ message: "Username or email is required" });
     }

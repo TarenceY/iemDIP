@@ -1,35 +1,40 @@
-import { useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Profile.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
 export default function Profile() {
   const navigate = useNavigate();
 
-  // Demo profile data (swap with real user data later)
-  const [profile] = useState({
-    name: "Janice",
-    age: 21,
-    gender: "Female",
-    goal: "Balanced eating",
-    dietaryPreference: "No preference",
-    allergies: "None",
-    dailyCalories: 1800,
-    proteinGoal: 110,
-    carbsGoal: 220,
-    fatsGoal: 60,
-  });
+  const userId = useMemo(() => localStorage.getItem("seefood_user_id") || "", []);
 
-  // These are not required on the view-only page, but kept here
-  // in case you want to display selectable options later.
-  useMemo(
-    () => ["Balanced eating", "Lose weight", "Gain muscle", "Maintain weight"],
-    []
-  );
-  useMemo(
-    () => ["No preference", "Vegetarian", "Vegan", "Halal", "Keto", "Gluten-free"],
-    []
-  );
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      setError("Not logged in. Please log in first.");
+      return;
+    }
+
+    fetch(`${API_URL}/users/${userId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        setProfile(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to load profile.");
+        setLoading(false);
+      });
+  }, [userId]);
 
   return (
     <div className="profile-container">
@@ -83,122 +88,107 @@ export default function Profile() {
           </div>
         </section>
 
-        {/* GRID */}
-        <section className="profile-grid">
-          {/* BASIC INFO SUMMARY */}
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Basic information</h2>
-              <span className="pill">Summary</span>
-            </div>
+        {loading && <div className="empty"><div className="empty-title">Loading profile…</div></div>}
+        {error && <div className="empty"><div className="empty-title" style={{ color: "red" }}>{error}</div></div>}
 
-            <div className="summary-grid">
-              <div className="summary-item">
-                <div className="summary-label">Name</div>
-                <div className="summary-value">{profile.name}</div>
+        {profile && (
+          <section className="profile-grid">
+            {/* BASIC INFO SUMMARY */}
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Basic information</h2>
+                <span className="pill">Summary</span>
               </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Age</div>
-                <div className="summary-value">{profile.age}</div>
-              </div>
+              <div className="summary-grid">
+                <div className="summary-item">
+                  <div className="summary-label">Username</div>
+                  <div className="summary-value">{profile.username || "—"}</div>
+                </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Gender</div>
-                <div className="summary-value">{profile.gender}</div>
-              </div>
+                <div className="summary-item">
+                  <div className="summary-label">Email</div>
+                  <div className="summary-value">{profile.email || "—"}</div>
+                </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Goal</div>
-                <div className="summary-value">{profile.goal}</div>
-              </div>
+                <div className="summary-item">
+                  <div className="summary-label">Age</div>
+                  <div className="summary-value">{profile.age ?? "—"}</div>
+                </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Dietary preference</div>
-                <div className="summary-value">{profile.dietaryPreference}</div>
-              </div>
+                <div className="summary-item">
+                  <div className="summary-label">Gender</div>
+                  <div className="summary-value">{profile.gender || "—"}</div>
+                </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Allergies</div>
-                <div className="summary-value">{profile.allergies}</div>
-              </div>
-            </div>
-          </div>
+                <div className="summary-item">
+                  <div className="summary-label">Goals</div>
+                  <div className="summary-value">
+                    {profile.goals && profile.goals.length > 0
+                      ? profile.goals.join(", ")
+                      : "—"}
+                  </div>
+                </div>
 
-          {/* NUTRITION TARGETS SUMMARY */}
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Nutrition targets</h2>
-              <span className="pill">Daily</span>
-            </div>
+                <div className="summary-item">
+                  <div className="summary-label">Dietary restrictions</div>
+                  <div className="summary-value">
+                    {profile.restrictions && profile.restrictions.length > 0
+                      ? profile.restrictions.join(", ")
+                      : "None"}
+                  </div>
+                </div>
 
-            <div className="summary-grid">
-              <div className="summary-item">
-                <div className="summary-label">Calories</div>
-                <div className="summary-value">{profile.dailyCalories} kcal</div>
-              </div>
-
-              <div className="summary-item">
-                <div className="summary-label">Protein</div>
-                <div className="summary-value">{profile.proteinGoal} g</div>
-              </div>
-
-              <div className="summary-item">
-                <div className="summary-label">Carbs</div>
-                <div className="summary-value">{profile.carbsGoal} g</div>
-              </div>
-
-              <div className="summary-item">
-                <div className="summary-label">Fats</div>
-                <div className="summary-value">{profile.fatsGoal} g</div>
+                <div className="summary-item">
+                  <div className="summary-label">Telegram</div>
+                  <div className="summary-value">
+                    {profile.telegramUsername ? `@${profile.telegramUsername}` : "Not linked"}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="note" style={{ marginTop: 14 }}>
-              Want to change these? Use “Edit profile”.
-            </div>
-          </div>
-        </section>
+            {/* ACCOUNT SECTION */}
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Account</h2>
+                <span className="pill">Security</span>
+              </div>
 
-        {/* ACCOUNT (optional section stays here) */}
-        <section className="panel account">
-          <div className="panel-head">
-            <h2>Account</h2>
-            <span className="pill">Security</span>
-          </div>
+              <div className="account-row">
+                <div>
+                  <div className="account-title">Change password</div>
+                  <div className="account-desc">
+                    Update your password regularly to keep your account safe.
+                  </div>
+                </div>
+                <button
+                  className="ghost-btn"
+                  onClick={() => alert("Hook this to your password flow!")}
+                >
+                  Change
+                </button>
+              </div>
 
-          <div className="account-row">
-            <div>
-              <div className="account-title">Change password</div>
-              <div className="account-desc">
-                Update your password regularly to keep your account safe.
+              <div className="divider" />
+
+              <div className="account-row">
+                <div>
+                  <div className="account-title">Delete account</div>
+                  <div className="account-desc">
+                    This action is permanent. Use carefully.
+                  </div>
+                </div>
+                <button
+                  className="danger-btn"
+                  onClick={() => alert("Hook this to your delete account flow!")}
+                >
+                  Delete
+                </button>
               </div>
             </div>
-            <button
-              className="ghost-btn"
-              onClick={() => alert("Hook this to your password flow!")}
-            >
-              Change
-            </button>
-          </div>
-
-          <div className="divider" />
-
-          <div className="account-row">
-            <div>
-              <div className="account-title">Delete account</div>
-              <div className="account-desc">
-                This action is permanent. Use carefully.
-              </div>
-            </div>
-            <button
-              className="danger-btn"
-              onClick={() => alert("Hook this to your delete account flow!")}
-            >
-              Delete
-            </button>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
     </div>
   );

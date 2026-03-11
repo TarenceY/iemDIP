@@ -8,13 +8,13 @@ exports.register = async (req, res) => {
       last_name, 
       email, 
       password, 
-      confirmPassword, // Added from frontend
+      confirmPassword,
       age, 
       gender, 
       height, 
       weight, 
-      workout_frequency, 
-      activeness_level 
+      workoutFrequency, 
+      activityLevel 
     } = req.body;
 
     // 1. Validate password match
@@ -41,8 +41,8 @@ exports.register = async (req, res) => {
       gender,
       height,
       weight,
-      workout_frequency,
-      activeness_level
+      workoutFrequency,
+      activityLevel
     });
 
     await user.save();
@@ -65,8 +65,8 @@ exports.updateProfile = async (req, res) => {
       gender, 
       height, 
       weight, 
-      workout_frequency, 
-      activeness_level,
+      workoutFrequency, 
+      activityLevel,
       restrictions,
       dislikes,
       goals 
@@ -81,8 +81,8 @@ exports.updateProfile = async (req, res) => {
       gender, 
       height, 
       weight, 
-      workout_frequency, 
-      activeness_level,
+      workoutFrequency, 
+      activityLevel,
       restrictions,
       dislikes,
       goals 

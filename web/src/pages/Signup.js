@@ -16,8 +16,8 @@ export default function Signup() {
   const [age, setAge] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
-  const [workout, setWorkout] = useState("");
-  const [activity, setActivity] = useState("");
+  const [workoutFrequency, setWorkoutFrequency] = useState("");
+  const [activityLevel, setActivityLevel] = useState("");
   const [agreed, setAgreed] = useState(false);
 
   // UI state
@@ -25,7 +25,7 @@ export default function Signup() {
   const [showPw, setShowPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError("");
 
     // Required fields check
@@ -39,8 +39,8 @@ export default function Signup() {
       !age ||
       !height ||
       !weight ||
-      !workout ||
-      !activity
+      !workoutFrequency ||
+      !activityLevel
     ) {
       setError("Please fill in all required fields.");
       return;
@@ -58,8 +58,36 @@ export default function Signup() {
       return;
     }
 
-    // OK -> go to login (dummy flow)
-    navigate("/login");
+    try {
+      const response = await fetch("http://localhost:3000/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          password,
+          confirmPassword,
+          age: Number(age),
+          gender,
+          height: Number(height),
+          weight: Number(weight),
+          workoutFrequency,
+          activityLevel,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Registration failed. Please try again.");
+        return;
+      }
+
+      navigate("/login");
+    } catch (err) {
+      setError("Unable to connect to the server. Please try again later.");
+    }
   };
 
   return (
@@ -194,14 +222,14 @@ export default function Signup() {
               <label>Workout Frequency</label>
               <select
                 className="signup-input"
-                value={workout}
-                onChange={(e) => setWorkout(e.target.value)}
+                value={workoutFrequency}
+                onChange={(e) => setWorkoutFrequency(e.target.value)}
               >
                 <option value="">Select</option>
                 <option>Never</option>
-                <option>1–2 times per week</option>
-                <option>3–4 times per week</option>
-                <option>5–6 times per week</option>
+                <option>1-2 times per week</option>
+                <option>3-4 times per week</option>
+                <option>5-6 times per week</option>
                 <option>Daily</option>
               </select>
             </div>
@@ -244,64 +272,19 @@ export default function Signup() {
           </div>
 
           {/* ACTIVITY LEVEL */}
-          <div className="activity-section">
-            <div className="activity-title">Activeness Level</div>
-
-            <label className="activity-option">
-              <input
-                type="radio"
-                name="activity"
-                value="sedentary"
-                checked={activity === "sedentary"}
-                onChange={(e) => setActivity(e.target.value)}
-              />
-              <div className="activity-text">
-                <strong>Sedentary</strong>
-                <span>Little to no activity, desk bound</span>
-              </div>
-            </label>
-
-            <label className="activity-option">
-              <input
-                type="radio"
-                name="activity"
-                value="light"
-                checked={activity === "light"}
-                onChange={(e) => setActivity(e.target.value)}
-              />
-              <div className="activity-text">
-                <strong>Light</strong>
-                <span>Light activity, some standing and walking</span>
-              </div>
-            </label>
-
-            <label className="activity-option">
-              <input
-                type="radio"
-                name="activity"
-                value="moderate"
-                checked={activity === "moderate"}
-                onChange={(e) => setActivity(e.target.value)}
-              />
-              <div className="activity-text">
-                <strong>Moderate</strong>
-                <span>On feet most days, moderate activity</span>
-              </div>
-            </label>
-
-            <label className="activity-option">
-              <input
-                type="radio"
-                name="activity"
-                value="high"
-                checked={activity === "high"}
-                onChange={(e) => setActivity(e.target.value)}
-              />
-              <div className="activity-text">
-                <strong>High</strong>
-                <span>Workout and exercise routinely</span>
-              </div>
-            </label>
+          <div className="field">
+            <label>Activeness Level</label>
+            <select
+              className="signup-input"
+              value={activityLevel}
+              onChange={(e) => setActivityLevel(e.target.value)}
+            >
+              <option value="">Select</option>
+              <option value="Sedentary">Sedentary</option>
+              <option value="light">light</option>
+              <option value="moderate">moderate</option>
+              <option value="high">high</option>
+            </select>
           </div>
 
           {/* TERMS */}

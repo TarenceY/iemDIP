@@ -16,19 +16,19 @@ const userSchema = new mongoose.Schema({
   weight: { type: Number }, // in kg
 
   // Lifestyle & Activity
-  workout_frequency: {
+  workoutFrequency: {
     type: String,
     enum: [
       "Never",
-      "1–2 times per week",
-      "3–4 times per week",
-      "5–6 times per week",
+      "1-2 times per week",
+      "3-4 times per week",
+      "5-6 times per week",
       "Daily"
     ]
   },
-  activeness_level: {
+  activityLevel: {
     type: String,
-    enum: ["Sedentary", "Light", "Moderate", "High"]
+    enum: ["Sedentary", "light", "moderate", "high"]
   },
 
   // Metadata & Future proofing

@@ -1,46 +1,52 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg"; 
+import seefoodLogo from "../assets/images/seefood-logo.jpg";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const DUMMY_USER = {
-    email: "test@seefood.com",
-    password: "12345678",
-  };
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError("");
 
-    // basic validation
     if (!email.trim() || !password.trim()) {
       setError("Please enter your email and password.");
       return;
     }
 
-    // check dummy credentials
-    const ok =
-      email.trim().toLowerCase() === DUMMY_USER.email.toLowerCase() &&
-      password === DUMMY_USER.password;
+    setIsLoading(true);
+    try {
+      const resp = await fetch(`${API_URL}/users/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
 
-    if (!ok) {
-      setError("Incorrect email or password. Please try again.");
-      return;
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        setError(data.message || "Incorrect email or password. Please try again.");
+        return;
+      }
+
+      localStorage.setItem("seefood_logged_in", "true");
+      localStorage.setItem("seefood_user_email", email.trim().toLowerCase());
+      localStorage.setItem("seefood_user_id", data.userId);
+      if (data.username) localStorage.setItem("seefood_username", data.username);
+
+      navigate("/home");
+    } catch (err) {
+      setError("Could not reach the server. Is the API running?");
+    } finally {
+      setIsLoading(false);
     }
-
-    // ✅ Optional: store a simple “logged in” flag
-    localStorage.setItem("seefood_logged_in", "true");
-    localStorage.setItem("seefood_user_email", email.trim().toLowerCase());
-
-    // go to home page
-    navigate("/home");
   };
 
   return (
@@ -68,7 +74,7 @@ export default function Login() {
           <span>IM3180 • Group IE01</span>
         </div>
       </div>
-      {/* RIGHT SIDE (you can keep your left side as-is) */}
+      {/* RIGHT SIDE */}
       <div className="login-right">
         <div className="login-card">
           <div className="login-header">
@@ -76,7 +82,6 @@ export default function Login() {
             <p>Use your email to continue.</p>
           </div>
 
-          {/* ✅ Error message */}
           {error && <div className="login-error">{error}</div>}
 
           <div className="field">
@@ -101,20 +106,15 @@ export default function Login() {
             />
           </div>
 
-          <button className="login-btn" onClick={handleLogin}>
-            Login
+          <button className="login-btn" onClick={handleLogin} disabled={isLoading}>
+            {isLoading ? "Logging in…" : "Login"}
           </button>
 
           <p className="signup-text">
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <span className="signup-link" onClick={() => navigate("/signup")}>
               Sign Up
             </span>
-          </p>
-
-          {/* ✅ Optional: show dummy credentials to testers */}
-          <p className="dummy-hint">
-            Demo login: <b>test@seefood.com</b> / <b>12345678</b>
           </p>
         </div>
       </div>

@@ -10,6 +10,8 @@ Or use uvicorn directly:
 
 import os
 import argparse
+import json
+import numpy as np
 from pathlib import Path
 from dotenv import load_dotenv
 from loguru import logger
@@ -24,6 +26,21 @@ logger.add(
     retention="7 days",
     level="INFO"
 )
+
+
+def convert_to_serializable(obj):
+    """Convert numpy types to Python native types for JSON serialization."""
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: convert_to_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_serializable(i) for i in obj]
+    return obj
 
 
 def run_server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
@@ -42,7 +59,6 @@ def run_server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
 def analyze_image(image_path: str, output_dir: str = None):
     """Run analysis on a single image from command line."""
     from src.pipeline import FoodNutritionPipeline
-    import json
     
     logger.info(f"Analyzing image: {image_path}")
     
@@ -57,11 +73,11 @@ def analyze_image(image_path: str, output_dir: str = None):
         print("\n" + "="*50)
         print("NUTRITION ANALYSIS RESULTS")
         print("="*50)
-        print(json.dumps(result.nutrition_data, indent=2))
+        print(json.dumps(convert_to_serializable(result.nutrition_data), indent=2))
         print("\n" + "="*50)
         print("CV DETECTION DATA")
         print("="*50)
-        print(json.dumps(result.cv_data, indent=2))
+        print(json.dumps(convert_to_serializable(result.cv_data), indent=2))
         
         if result.annotated_image_path:
             print(f"\nAnnotated image saved to: {result.annotated_image_path}")

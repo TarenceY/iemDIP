@@ -104,7 +104,7 @@ Respond ONLY with valid JSON, no additional text."""
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "gemini-1.5-flash"
+        model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     ):
         """
         Initialize the Gemini analyzer.

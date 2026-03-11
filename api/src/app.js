@@ -3,7 +3,14 @@ require("dotenv").config();
 console.log("Starting server...");
 
 const express = require("express");
+const cors = require("cors");
 const app = express();
+
+// Allow requests from the React frontend
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  credentials: true,
+}));
 
 // Load MongoDB connection
 const db = require("./database");

@@ -2,21 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg"; 
+import { loginUser } from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const DUMMY_USER = {
-    email: "test@seefood.com",
-    password: "12345678",
-  };
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError("");
 
     // basic validation
@@ -25,22 +21,21 @@ export default function Login() {
       return;
     }
 
-    // check dummy credentials
-    const ok =
-      email.trim().toLowerCase() === DUMMY_USER.email.toLowerCase() &&
-      password === DUMMY_USER.password;
+    setLoading(true);
+    try {
+      const data = await loginUser(email.trim().toLowerCase(), password);
 
-    if (!ok) {
-      setError("Incorrect email or password. Please try again.");
-      return;
+      localStorage.setItem("seefood_logged_in", "true");
+      localStorage.setItem("seefood_user_email", email.trim().toLowerCase());
+      localStorage.setItem("seefood_user_id", data.userId);
+      localStorage.setItem("seefood_username", data.username);
+
+      navigate("/home");
+    } catch (err) {
+      setError(err.message || "Incorrect email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    // ✅ Optional: store a simple “logged in” flag
-    localStorage.setItem("seefood_logged_in", "true");
-    localStorage.setItem("seefood_user_email", email.trim().toLowerCase());
-
-    // go to home page
-    navigate("/home");
   };
 
   return (
@@ -101,20 +96,15 @@ export default function Login() {
             />
           </div>
 
-          <button className="login-btn" onClick={handleLogin}>
-            Login
+          <button className="login-btn" onClick={handleLogin} disabled={loading}>
+            {loading ? "Logging in…" : "Login"}
           </button>
 
           <p className="signup-text">
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <span className="signup-link" onClick={() => navigate("/signup")}>
               Sign Up
             </span>
-          </p>
-
-          {/* ✅ Optional: show dummy credentials to testers */}
-          <p className="dummy-hint">
-            Demo login: <b>test@seefood.com</b> / <b>12345678</b>
           </p>
         </div>
       </div>

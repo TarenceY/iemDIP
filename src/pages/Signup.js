@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Signup.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg"; 
+import { registerUser } from "../services/api";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -22,10 +23,11 @@ export default function Signup() {
 
   // UI state
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError("");
 
     // Required fields check
@@ -58,8 +60,26 @@ export default function Signup() {
       return;
     }
 
-    // OK -> go to login (dummy flow)
-    navigate("/login");
+    setLoading(true);
+    try {
+      await registerUser({
+        username: [firstName, lastName].filter(Boolean).join(" ").trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        age: Number(age),
+        gender,
+        restrictions: [],
+        dislikes: [],
+        goals: [activity, workout].filter(Boolean),
+      });
+
+      // Registration successful → go to login
+      navigate("/login");
+    } catch (err) {
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -318,8 +338,8 @@ export default function Signup() {
           </label>
 
           {/* SUBMIT */}
-          <button className="primary-btn" onClick={handleSubmit}>
-            Continue
+          <button className="primary-btn" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Creating account…" : "Continue"}
           </button>
 
           {/* ERROR */}

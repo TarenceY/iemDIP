@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/History.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg";
+import AppLayout from "../components/AppLayout";
 
 export default function History() {
   const navigate = useNavigate();
@@ -76,40 +76,7 @@ export default function History() {
   }
 
   return (
-    <div className="history-container">
-      {/* TOP NAVBAR (same layout as Dashboard/Home) */}
-      <header className="history-header">
-        <div
-          className="history-brand"
-          role="button"
-          tabIndex={0}
-          onClick={() => navigate("/home")}
-        >
-          <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
-        </div>
-
-        <nav className="profile-nav">
-          <button className="nav-btn" onClick={() => navigate("/home")}>
-            Home
-          </button>
-          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
-            Dashboard
-          </button>
-          <button className="nav-btn active" onClick={() => navigate("/history")}>
-            History
-          </button>
-          <button className="nav-btn" onClick={() => navigate("/profile")}>
-            Profile
-          </button>
-        </nav>
-
-        <button className="nav-btn" onClick={() => navigate("/login")}>
-          Log out
-        </button>
-      </header>
-
-      <main className="history-content">
+    <AppLayout activePage="history">
         <section className="history-hero">
           <h1>Meal History</h1>
           <p className="history-subtitle">
@@ -208,7 +175,6 @@ export default function History() {
 
         {/* TOAST */}
         {toast && <div className="toast">{toast}</div>}
-      </main>
-    </div>
+    </AppLayout>
   );
 }

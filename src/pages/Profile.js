@@ -1,72 +1,40 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Profile.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg";
+import { getUserInfo } from "../services/api";
+import AppLayout from "../components/AppLayout";
 
 export default function Profile() {
   const navigate = useNavigate();
 
-  // Demo profile data (swap with real user data later)
-  const [profile] = useState({
-    name: "Janice",
-    age: 21,
-    gender: "Female",
-    goal: "Balanced eating",
-    dietaryPreference: "No preference",
-    allergies: "None",
-    dailyCalories: 1800,
-    proteinGoal: 110,
-    carbsGoal: 220,
-    fatsGoal: 60,
-  });
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // These are not required on the view-only page, but kept here
-  // in case you want to display selectable options later.
-  useMemo(
-    () => ["Balanced eating", "Lose weight", "Gain muscle", "Maintain weight"],
-    []
-  );
-  useMemo(
-    () => ["No preference", "Vegetarian", "Vegan", "Halal", "Keto", "Gluten-free"],
-    []
-  );
+  useEffect(() => {
+    const userId = localStorage.getItem("seefood_user_id");
+    if (!userId) {
+      navigate("/login");
+      return;
+    }
+
+    getUserInfo(userId)
+      .then((data) => {
+        setProfile({
+          name: data.username || "",
+          age: data.age || "—",
+          gender: data.gender || "—",
+          goals: data.goals || [],
+          restrictions: data.restrictions || [],
+          dislikes: data.dislikes || [],
+        });
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [navigate]);
 
   return (
-    <div className="profile-container">
-      {/* TOP NAVBAR */}
-      <header className="profile-header">
-        <div
-          className="profile-brand"
-          role="button"
-          tabIndex={0}
-          onClick={() => navigate("/home")}
-        >
-          <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
-        </div>
-
-        <nav className="profile-nav">
-          <button className="nav-btn" onClick={() => navigate("/home")}>
-            Home
-          </button>
-          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
-            Dashboard
-          </button>
-          <button className="nav-btn" onClick={() => navigate("/history")}>
-            History
-          </button>
-          <button className="nav-btn active" onClick={() => navigate("/profile")}>
-            Profile
-          </button>
-        </nav>
-
-        <button className="nav-btn" onClick={() => navigate("/login")}>
-          Log out
-        </button>
-      </header>
-
-      {/* MAIN CONTENT */}
-      <main className="profile-content">
+    <AppLayout activePage="profile">
         {/* HERO */}
         <section className="profile-hero">
           <div className="hero-left">
@@ -83,84 +51,60 @@ export default function Profile() {
           </div>
         </section>
 
-        {/* GRID */}
-        <section className="profile-grid">
-          {/* BASIC INFO SUMMARY */}
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Basic information</h2>
-              <span className="pill">Summary</span>
-            </div>
+        {loading && <p>Loading profile…</p>}
+        {error && <p className="login-error">{error}</p>}
 
-            <div className="summary-grid">
-              <div className="summary-item">
-                <div className="summary-label">Name</div>
-                <div className="summary-value">{profile.name}</div>
+        {profile && (
+          <section className="profile-grid">
+            {/* BASIC INFO SUMMARY */}
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Basic information</h2>
+                <span className="pill">Summary</span>
               </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Age</div>
-                <div className="summary-value">{profile.age}</div>
-              </div>
+              <div className="summary-grid">
+                <div className="summary-item">
+                  <div className="summary-label">Name</div>
+                  <div className="summary-value">{profile.name}</div>
+                </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Gender</div>
-                <div className="summary-value">{profile.gender}</div>
-              </div>
+                <div className="summary-item">
+                  <div className="summary-label">Age</div>
+                  <div className="summary-value">{profile.age}</div>
+                </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Goal</div>
-                <div className="summary-value">{profile.goal}</div>
-              </div>
+                <div className="summary-item">
+                  <div className="summary-label">Gender</div>
+                  <div className="summary-value">{profile.gender}</div>
+                </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Dietary preference</div>
-                <div className="summary-value">{profile.dietaryPreference}</div>
-              </div>
+                <div className="summary-item">
+                  <div className="summary-label">Goals</div>
+                  <div className="summary-value">
+                    {profile.goals.length > 0 ? profile.goals.join(", ") : "—"}
+                  </div>
+                </div>
 
-              <div className="summary-item">
-                <div className="summary-label">Allergies</div>
-                <div className="summary-value">{profile.allergies}</div>
-              </div>
-            </div>
-          </div>
+                <div className="summary-item">
+                  <div className="summary-label">Dietary restrictions</div>
+                  <div className="summary-value">
+                    {profile.restrictions.length > 0 ? profile.restrictions.join(", ") : "None"}
+                  </div>
+                </div>
 
-          {/* NUTRITION TARGETS SUMMARY */}
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Nutrition targets</h2>
-              <span className="pill">Daily</span>
-            </div>
-
-            <div className="summary-grid">
-              <div className="summary-item">
-                <div className="summary-label">Calories</div>
-                <div className="summary-value">{profile.dailyCalories} kcal</div>
-              </div>
-
-              <div className="summary-item">
-                <div className="summary-label">Protein</div>
-                <div className="summary-value">{profile.proteinGoal} g</div>
-              </div>
-
-              <div className="summary-item">
-                <div className="summary-label">Carbs</div>
-                <div className="summary-value">{profile.carbsGoal} g</div>
-              </div>
-
-              <div className="summary-item">
-                <div className="summary-label">Fats</div>
-                <div className="summary-value">{profile.fatsGoal} g</div>
+                <div className="summary-item">
+                  <div className="summary-label">Dislikes</div>
+                  <div className="summary-value">
+                    {profile.dislikes.length > 0 ? profile.dislikes.join(", ") : "None"}
+                  </div>
+                </div>
               </div>
             </div>
+          </section>
+        )}
 
-            <div className="note" style={{ marginTop: 14 }}>
-              Want to change these? Use “Edit profile”.
-            </div>
-          </div>
-        </section>
-
-        {/* ACCOUNT (optional section stays here) */}
+        {/* ACCOUNT */}
         <section className="panel account">
           <div className="panel-head">
             <h2>Account</h2>
@@ -199,7 +143,6 @@ export default function Profile() {
             </button>
           </div>
         </section>
-      </main>
-    </div>
+    </AppLayout>
   );
 }

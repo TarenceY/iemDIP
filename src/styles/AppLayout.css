@@ -1,0 +1,121 @@
+/* ================================================================
+   AppLayout — shared shell for Home / Dashboard / History / Profile
+   ================================================================ */
+
+/* ---- CSS custom properties (shared across all inner-app pages) ---- */
+:root {
+  --bg:     #f6f2e9;
+  --card:   #fbfaf7;
+  --ink:    #1f2937;
+  --muted:  #6b7280;
+  --border: #e7e1d6;
+  --green:  #1f5a3b;
+  --green2: #2f7a52;
+  --green3: #bed255;
+  --shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+}
+
+/* ---- Page shell ---- */
+.app-shell {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink);
+}
+
+/* ---- Header: full-width background, constrained inner ---- */
+.app-header {
+  background: rgba(251, 250, 247, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/*
+ * Key alignment fix:
+ * Both .app-header-inner and .app-content share the same
+ * max-width + horizontal padding, so logo / nav / logout
+ * line up exactly with the left and right edges of page content
+ * at every viewport size.
+ */
+.app-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 32px;
+}
+
+/* ---- Brand (logo + name) ---- */
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--green);
+  cursor: pointer;
+  user-select: none;
+}
+
+.app-brand img {
+  height: 34px;
+}
+
+/* ---- Nav row ---- */
+.app-nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ---- Nav buttons ---- */
+.app-header-inner .nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.app-header-inner .nav-btn:hover {
+  background-color: var(--green3);
+  color: var(--ink);
+}
+
+.app-header-inner .nav-btn.active {
+  background: rgba(31, 90, 59, 0.12);
+  color: var(--green);
+  border-color: rgba(31, 90, 59, 0.18);
+}
+
+/* ---- Content area — same constraint as header-inner ---- */
+.app-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 50px 32px;
+}
+
+/* ---- Responsive: tighten padding on narrow screens ---- */
+@media (max-width: 600px) {
+  .app-header-inner {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .app-nav {
+    gap: 4px;
+  }
+
+  .app-content {
+    padding: 32px 16px;
+  }
+}

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/EditProfile.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg";
 import { getUserInfo, updateProfile } from "../services/api";
+import AppLayout from "../components/AppLayout";
 
 export default function EditProfile() {
   const navigate = useNavigate();
@@ -64,7 +64,7 @@ export default function EditProfile() {
         dislikes: profile.dislikes,
         goals: profile.goals,
       };
-      if (profile.age) updates.age = Number(profile.age);
+      if (profile.age !== "" && profile.age != null) updates.age = Number(profile.age);
       await updateProfile(userId, updates);
       navigate("/profile");
     } catch (err) {
@@ -75,32 +75,7 @@ export default function EditProfile() {
   }
 
   return (
-    <div className="editprofile-container">
-      <header className="profile-header">
-        <div
-          className="profile-brand"
-          role="button"
-          tabIndex={0}
-          onClick={() => navigate("/home")}
-        >
-          <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
-        </div>
-
-        <nav className="profile-nav">
-          <button className="nav-btn" onClick={() => navigate("/home")}>Home</button>
-          <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
-          <button className="nav-btn" onClick={() => navigate("/history")}>History</button>
-          <button className="nav-btn active" onClick={() => navigate("/profile")}>Profile</button>
-        </nav>
-
-        <button className="nav-btn" onClick={() => {
-          ["seefood_logged_in","seefood_user_email","seefood_user_id","seefood_username"].forEach(k => localStorage.removeItem(k));
-          navigate("/login");
-        }}>Log out</button>
-      </header>
-
-      <main className="editprofile-content">
+    <AppLayout activePage="profile">
         <section className="editprofile-hero">
           <div>
             <h1>Edit Profile</h1>
@@ -204,7 +179,6 @@ export default function EditProfile() {
             </div>
           </section>
         )}
-      </main>
-    </div>
+    </AppLayout>
   );
 }

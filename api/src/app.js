@@ -3,12 +3,15 @@ require("dotenv").config();
 console.log("Starting server...");
 
 const express = require("express");
+const https = require("https");
 const app = express();
 
 // Load MongoDB connection
 const db = require("./database");
+const User = require("./models/User");
+const PhotoRequest = require("./models/PhotoRequest");
 
-// Allow cross-origin requests (e.g. React webapp on localhost:3000)
+// Allow the React webapp (localhost:3000) to call this API
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -18,6 +21,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json({ limit: "10mb" }));
+app.use(express.raw({ type: "application/octet-stream", limit: "10mb" }));
 
 // Routes
 const usersRoutes = require("./routes/users");
@@ -25,6 +29,16 @@ app.use("/users", usersRoutes);
 
 const recipesRoutes = require("./routes/recipes");
 app.use("/recipes", recipesRoutes);
+
+const telegramRoutes = require("./routes/telegram");
+app.use("/telegram", telegramRoutes);
+
+const rateLimit = require("express-rate-limit");
+const analyzeLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  message: { message: "Too many analyze requests. Please try again shortly." },
+});
 
 const PORT = process.env.PORT || 3000;
 
@@ -36,11 +50,197 @@ app.get("/", (req, res) => {
 // Health check
 app.get("/health", (req, res) => {
   const mongoStatus = db.readyState === 1 ? "connected" : "disconnected";
+
   res.json({
     status: "ok",
     mongoDB: mongoStatus,
     timestamp: new Date(),
   });
+});
+
+// ---------------------------------------------------------------------------
+// AI Integration helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Send an image buffer to the Python AI service and return the raw response.
+ * @param {Buffer} imageBuffer  Raw image bytes
+ * @param {string} mimeType     MIME type of the image (e.g. "image/jpeg")
+ * @returns {Promise<object>}   Parsed JSON from the AI service
+ */
+async function callAIService(imageBuffer, mimeType = "image/jpeg") {
+  const aiApiUrl = process.env.AI_API_URL || "http://localhost:8000";
+
+  const formData = new FormData();
+  const blob = new Blob([imageBuffer], { type: mimeType });
+  formData.append("image", blob, "meal.jpg");
+  formData.append("include_annotated", "false");
+
+  const response = await fetch(`${aiApiUrl}/api/analyze`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`AI service error ${response.status}: ${text}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Transform the AI service response into the shape the React frontend expects.
+ * @param {object} aiData  Response body from the Python AI service
+ * @returns {object}       { name, calories, macros, highlights, suggestions }
+ */
+function transformAIResponse(aiData) {
+  const nutrition = aiData.nutrition || {};
+  const totals = nutrition.totals || {};
+  const foodItems = nutrition.food_items || [];
+
+  // Meal name: join detected food item names
+  const foodNames = foodItems.map((item) => item.food_name).filter(Boolean);
+  const name = foodNames.length > 0 ? foodNames.join(", ") : "Detected meal";
+
+  const calories = Math.round(totals.calories || 0);
+  const protein = Math.round(totals.protein_g || 0);
+  const carbs = Math.round(totals.carbohydrates_g || 0);
+  const fats = Math.round(totals.fat_g || 0);
+
+  // Generate highlights from macro values
+  const highlights = [];
+  if (protein >= 25) highlights.push("High protein");
+  else if (protein >= 15) highlights.push("Good protein");
+  if (fats <= 10) highlights.push("Low fat");
+  if (carbs <= 30) highlights.push("Low carb");
+  if (calories <= 400) highlights.push("Low calorie");
+  if (highlights.length === 0) highlights.push("Balanced meal");
+
+  // Parse suggestions from the AI analysis notes
+  const notes = nutrition.analysis_notes || "";
+  const suggestions = notes
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 10)
+    .slice(0, 3);
+  if (suggestions.length === 0) suggestions.push("Enjoy your meal!");
+
+  return { name, calories, macros: { protein, carbs, fats }, highlights, suggestions };
+}
+
+/**
+ * Fetch the image bytes for a Telegram photo request.
+ * @param {string} requestId  UUID of the photo request
+ * @returns {Promise<{buffer: Buffer, mimeType: string}>}
+ */
+async function fetchTelegramPhoto(requestId) {
+  const doc = await PhotoRequest.findOne({ requestId, status: "completed" });
+  if (!doc || !doc.photoUrl) {
+    throw new Error("Photo not found or not yet uploaded.");
+  }
+
+  // Fetch from the photo URL (S3 or local API endpoint)
+  const response = await fetch(doc.photoUrl);
+  if (!response.ok) throw new Error(`Failed to fetch photo: ${response.status}`);
+
+  const arrayBuffer = await response.arrayBuffer();
+  return { buffer: Buffer.from(arrayBuffer), mimeType: "image/jpeg" };
+}
+
+// ---------------------------------------------------------------------------
+// POST /analyze
+//
+// Accepts a meal photo and returns AI nutritional analysis.
+// Supports two content types:
+//   - application/json: { image: "<base64>", userId: "<optional>", chatId: "<optional>" }
+//   - application/json: { requestId: "<uuid>", userId: "<optional>" }  (Telegram upload)
+//   - application/octet-stream: raw image bytes (sent by the Telegram bot)
+//
+// If a chatId (or the userId's linked telegramChatId) is available and TELEGRAM_TOKEN
+// is set in the environment, the result is also sent to the user via Telegram.
+// ---------------------------------------------------------------------------
+app.post("/analyze", analyzeLimiter, async (req, res) => {
+  let imageBuffer;
+  let mimeType = "image/jpeg";
+
+  try {
+    if (Buffer.isBuffer(req.body)) {
+      // Raw bytes sent by the Telegram bot
+      imageBuffer = req.body;
+    } else if (req.body && req.body.requestId) {
+      // Telegram photo upload flow – locate the stored image
+      const { buffer, mimeType: mt } = await fetchTelegramPhoto(req.body.requestId);
+      imageBuffer = buffer;
+      mimeType = mt;
+    } else if (req.body && req.body.image) {
+      // Base64-encoded image from the webapp
+      imageBuffer = Buffer.from(req.body.image, "base64");
+    } else {
+      return res.status(400).json({ message: "No image provided." });
+    }
+  } catch (err) {
+    console.error("Image retrieval error:", err.message);
+    return res.status(400).json({ message: err.message || "Failed to retrieve image." });
+  }
+
+  // Call the AI service
+  let result;
+  try {
+    const aiData = await callAIService(imageBuffer, mimeType);
+    result = transformAIResponse(aiData);
+  } catch (err) {
+    console.error("AI analysis error:", err.message);
+    return res.status(502).json({
+      message: "AI analysis service is unavailable. Please ensure the AI server is running.",
+      detail: err.message,
+    });
+  }
+
+  // Determine chat ID to notify via Telegram
+  let chatId = null;
+  if (req.body && req.body.chatId) {
+    chatId = req.body.chatId;
+  } else if (req.body && req.body.userId) {
+    try {
+      const user = await User.findById(req.body.userId).select("telegramChatId");
+      if (user && user.telegramChatId) chatId = user.telegramChatId;
+    } catch (_) {
+      // Non-fatal – proceed without Telegram notification
+    }
+  }
+
+  // Send Telegram notification if we have a chat ID and bot token
+  const token = process.env.TELEGRAM_TOKEN;
+  if (chatId && token) {
+    const text =
+      `📊 *Meal Analysis* (from webapp)\n\n` +
+      `🍽️ *${result.name}*\n` +
+      `🔥 ${result.calories} kcal\n\n` +
+      `*Macros:*\n` +
+      `• Protein: ${result.macros.protein}g\n` +
+      `• Carbs: ${result.macros.carbs}g\n` +
+      `• Fats: ${result.macros.fats}g\n\n` +
+      `*Highlights:* ${result.highlights.join(", ")}\n` +
+      `*Suggestions:* ${result.suggestions.join("; ")}`;
+
+    const payload = JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" });
+    const options = {
+      hostname: "api.telegram.org",
+      path: `/bot${token}/sendMessage`,
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) },
+    };
+
+    const telegramReq = https.request(options);
+    telegramReq.on("error", (err) => {
+      console.error("Telegram notification failed:", err.message);
+    });
+    telegramReq.write(payload);
+    telegramReq.end();
+  }
+
+  res.json(result);
 });
 
 app.listen(PORT, () => {

@@ -1,203 +1,273 @@
 """
-FastAPI Routes
+FastAPI Routes for Food Nutrition Analysis API.
 
-Exposes the food nutrition analysis pipeline as an HTTP API.
-
-Endpoints
----------
-GET  /                          Health check
-POST /api/analyze               Analyze a meal image (multipart form)
-POST /api/cv-only               Run CV analysis only (no Gemini)
-GET  /api/generate-aruco/{id}   Generate & return an ArUco marker PNG
+Provides REST endpoints for image upload and nutrition analysis.
 """
 
-import io
 import os
 import tempfile
+import base64
 from typing import Optional
+from pathlib import Path
+from datetime import datetime
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, FileResponse
+from pydantic import BaseModel
 from loguru import logger
 
 from ..pipeline import FoodNutritionPipeline
-from ..cv_layer.aruco_detector import ArUcoDetector
-from ..cv_layer.cv_pipeline import CVPipeline
-
-# ---------------------------------------------------------------------------
-# App setup
-# ---------------------------------------------------------------------------
-
-app = FastAPI(
-    title="SeeFood – Food Nutrition Analysis API",
-    description=(
-        "AI-powered nutritional analysis using YOLOv8 computer vision "
-        "and Google Gemini. Upload a meal photo to receive calorie and "
-        "macro-nutrient estimates."
-    ),
-    version="1.0.0",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Lazy-initialise the pipeline (avoids long startup times during import)
-_pipeline: Optional[FoodNutritionPipeline] = None
-_cv_only_pipeline: Optional[CVPipeline] = None
 
 
-def _get_pipeline() -> FoodNutritionPipeline:
-    global _pipeline
-    if _pipeline is None:
-        _pipeline = FoodNutritionPipeline()
-    return _pipeline
+# Response Models
+class NutritionItem(BaseModel):
+    food_name: str
+    serving_size: str
+    calories: float
+    protein_g: float
+    carbohydrates_g: float
+    fat_g: float
+    fiber_g: float
+    sugar_g: float
+    sodium_mg: float
+    confidence: str
+    notes: Optional[str] = None
 
 
-def _get_cv_pipeline() -> CVPipeline:
-    global _cv_only_pipeline
-    if _cv_only_pipeline is None:
-        _cv_only_pipeline = CVPipeline()
-    return _cv_only_pipeline
+class NutritionTotals(BaseModel):
+    calories: float
+    protein_g: float
+    carbohydrates_g: float
+    fat_g: float
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-async def _save_upload_to_temp(upload: UploadFile) -> str:
-    """Save an uploaded file to a temporary path and return that path."""
-    suffix = os.path.splitext(upload.filename or "image.jpg")[1] or ".jpg"
-    contents = await upload.read()
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        tmp.write(contents)
-        return tmp.name
+class CVFoodItem(BaseModel):
+    name: str
+    confidence: float
+    bbox: list
+    width_cm: Optional[float]
+    height_cm: Optional[float]
+    diameter_cm: Optional[float]
 
 
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
+class AnalysisResponse(BaseModel):
+    success: bool
+    timestamp: str
+    cv_analysis: dict
+    nutrition: dict
+    annotated_image_base64: Optional[str] = None
+    error: Optional[str] = None
 
-@app.get("/", summary="Health check")
-def health():
-    return {"status": "ok", "service": "SeeFood Food Nutrition Analysis API"}
 
-
-@app.post("/api/analyze", summary="Analyze a meal image")
-async def analyze(
-    image: UploadFile = File(..., description="Meal photo (JPEG, PNG, or WebP)"),
-    include_annotated: str = Form("false", description="Reserved – not yet used"),
-):
+def create_app(
+    gemini_api_key: Optional[str] = None,
+    cors_origins: list = ["*"]
+) -> FastAPI:
     """
-    Accept a meal photo and return AI-generated nutritional information.
-
-    Supported image formats: JPEG, PNG, WebP, GIF.
-
-    The response shape is:
-    ```json
-    {
-        "nutrition": {
-            "food_items": [...],
-            "totals": { "calories": N, "protein_g": N, "carbohydrates_g": N, "fat_g": N },
-            "analysis_notes": "..."
-        },
-        "cv_analysis": {
-            "has_scale_reference": false,
-            "pixels_per_cm": null,
-            "food_items": [...]
-        }
-    }
-    ```
+    Create and configure the FastAPI application.
+    
+    Args:
+        gemini_api_key: Google Gemini API key
+        cors_origins: Allowed CORS origins
+        
+    Returns:
+        Configured FastAPI application
     """
-    tmp_path = None
-    try:
-        # Validate MIME type
-        allowed_types = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-        content_type = (image.content_type or "").lower()
-        if content_type not in allowed_types:
-            raise HTTPException(
-                status_code=415,
-                detail=f"Unsupported file type '{content_type}'. Allowed: JPEG, PNG, WebP, GIF.",
-            )
-
-        tmp_path = await _save_upload_to_temp(image)
-        pipeline = _get_pipeline()
-        result = pipeline.analyze(image_path=tmp_path)
-
-        if not result.success:
-            raise HTTPException(status_code=500, detail=result.error or "Analysis failed.")
-
+    app = FastAPI(
+        title="Food Nutrition Analysis API",
+        description="Analyze food images for nutrition information using CV + Gemini AI",
+        version="1.0.0"
+    )
+    
+    # CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Initialize pipeline (lazy loading)
+    pipeline: Optional[FoodNutritionPipeline] = None
+    
+    def get_pipeline() -> FoodNutritionPipeline:
+        nonlocal pipeline
+        if pipeline is None:
+            api_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
+            pipeline = FoodNutritionPipeline(gemini_api_key=api_key)
+        return pipeline
+    
+    @app.get("/")
+    async def root():
+        """Health check endpoint."""
         return {
-            "nutrition": result.nutrition_data,
-            "cv_analysis": result.cv_data,
+            "status": "healthy",
+            "service": "Food Nutrition Analysis API",
+            "version": "1.0.0"
         }
+    
+    @app.get("/health")
+    async def health_check():
+        """Detailed health check."""
+        return {
+            "status": "healthy",
+            "gemini_configured": bool(os.getenv("GEMINI_API_KEY") or gemini_api_key),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    @app.post("/api/analyze", response_model=AnalysisResponse)
+    async def analyze_food(
+        image: UploadFile = File(...),
+        include_annotated: bool = Form(default=True)
+    ):
+        """
+        Analyze a food image for nutrition information.
+        
+        - **image**: Food image file (jpg, png, webp)
+        - **include_annotated**: Include base64 annotated image in response
+        
+        Returns nutrition analysis with CV detection data.
+        """
+        # Validate file type
+        allowed_types = ["image/jpeg", "image/png", "image/webp"]
+        if image.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed: {allowed_types}"
+            )
+        
+        # Determine file suffix safely (filename may be None)
+        filename = image.filename or "upload.jpg"
+        suffix = Path(filename).suffix or ".jpg"
 
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.exception("Unhandled error in /api/analyze")
-        raise HTTPException(status_code=500, detail=str(exc))
-    finally:
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
+        try:
+            # Save uploaded image temporarily
+            with tempfile.NamedTemporaryFile(
+                suffix=suffix,
+                delete=False
+            ) as tmp:
+                content = await image.read()
+                tmp.write(content)
+                tmp_path = tmp.name
+            
+            # Run analysis
+            pipe = get_pipeline()
+            result = pipe.analyze(
+                image_path=tmp_path,
+                save_annotated=include_annotated
+            )
+            
+            # Encode annotated image if available
+            annotated_base64 = None
+            if include_annotated and result.annotated_image_path:
+                try:
+                    with open(result.annotated_image_path, "rb") as f:
+                        annotated_base64 = base64.b64encode(f.read()).decode()
+                    # Clean up annotated image
+                    Path(result.annotated_image_path).unlink(missing_ok=True)
+                except OSError:
+                    pass
+            
+            # Clean up temp file
+            Path(tmp_path).unlink(missing_ok=True)
+            
+            return AnalysisResponse(
+                success=result.success,
+                timestamp=datetime.utcnow().isoformat(),
+                cv_analysis=result.cv_data,
+                nutrition=result.nutrition_data,
+                annotated_image_base64=annotated_base64,
+                error=result.error
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Analysis failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @app.post("/api/cv-only")
+    async def cv_analysis_only(image: UploadFile = File(...)):
+        """
+        Run only Computer Vision analysis (no Gemini).
+        
+        Useful for testing CV pipeline or when Gemini API is not available.
+        """
+        allowed_types = ["image/jpeg", "image/png", "image/webp"]
+        if image.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed: {allowed_types}"
+            )
+        
+        filename = image.filename or "upload.jpg"
+        suffix = Path(filename).suffix or ".jpg"
+
+        try:
+            with tempfile.NamedTemporaryFile(
+                suffix=suffix,
+                delete=False
+            ) as tmp:
+                content = await image.read()
+                tmp.write(content)
+                tmp_path = tmp.name
+            
+            pipe = get_pipeline()
+            cv_result = pipe.get_cv_only(tmp_path)
+            
+            # Clean up
+            Path(tmp_path).unlink(missing_ok=True)
+            
+            return {
+                "success": True,
+                "timestamp": datetime.utcnow().isoformat(),
+                "cv_analysis": pipe.cv_pipeline.get_detection_summary(cv_result),
+                "metadata_text": cv_result.metadata_text
+            }
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"CV analysis failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @app.get("/api/generate-aruco/{marker_id}")
+    async def generate_aruco_marker(
+        marker_id: int = 0,
+        size: int = 200
+    ):
+        """
+        Generate an ArUco marker image for printing.
+        
+        - **marker_id**: Marker ID (0-49 for DICT_4X4_50)
+        - **size**: Image size in pixels
+        
+        Returns PNG image of the marker.
+        """
+        from ..cv_layer.aruco_detector import ArUcoDetector
+        import cv2
+        
+        if marker_id < 0 or marker_id > 49:
+            raise HTTPException(
+                status_code=400,
+                detail="Marker ID must be between 0 and 49"
+            )
+        
+        marker = ArUcoDetector.generate_marker(marker_id, size)
+        
+        # Save to temp file
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            cv2.imwrite(tmp.name, marker)
+            return FileResponse(
+                tmp.name,
+                media_type="image/png",
+                filename=f"aruco_marker_{marker_id}.png"
+            )
+    
+    return app
 
 
-@app.post("/api/cv-only", summary="Run CV analysis only (no Gemini)")
-async def cv_only(
-    image: UploadFile = File(..., description="Meal photo"),
-):
-    """
-    Run ArUco marker detection and YOLOv8 food detection without calling Gemini.
-
-    Useful for testing the computer-vision stack in isolation.
-    """
-    tmp_path = None
-    try:
-        tmp_path = await _save_upload_to_temp(image)
-        cv_data = _get_cv_pipeline().analyze(tmp_path)
-        return {"cv_analysis": cv_data}
-
-    except Exception as exc:
-        logger.exception("Unhandled error in /api/cv-only")
-        raise HTTPException(status_code=500, detail=str(exc))
-    finally:
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
-
-
-@app.get("/api/generate-aruco/{marker_id}", summary="Generate an ArUco marker PNG")
-def generate_aruco(marker_id: int):
-    """
-    Generate an ArUco marker image for printing.
-
-    * marker_id: integer 0–49
-    * Returns a PNG image
-
-    Print the marker at exactly **5 cm × 5 cm** and place it next to your
-    food when taking photos for accurate size measurements.
-    """
-    if not (0 <= marker_id <= 49):
-        raise HTTPException(status_code=400, detail="marker_id must be between 0 and 49.")
-
-    import cv2
-
-    marker_img = ArUcoDetector.generate_marker(marker_id, size_pixels=400)
-
-    # Add a white border for easier printing
-    bordered = cv2.copyMakeBorder(marker_img, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
-
-    ok, buffer = cv2.imencode(".png", bordered)
-    if not ok:
-        raise HTTPException(status_code=500, detail="Failed to encode marker image.")
-
-    return Response(content=bytes(buffer), media_type="image/png")
+# Create default app instance
+app = create_app()

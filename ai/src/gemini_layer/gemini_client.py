@@ -1,187 +1,288 @@
 """
-Gemini Client
+Google Gemini Nutrition Analyzer
 
-Sends the meal image plus computer-vision metadata to Google Gemini and
-parses the structured nutrition response expected by the Node.js backend.
-
-Response shape (mirrors transformAIResponse() in api/src/app.js):
-{
-    "food_items": [...],
-    "totals": { "calories": N, "protein_g": N, "carbohydrates_g": N, "fat_g": N },
-    "analysis_notes": "..."
-}
+Uses Gemini's vision capabilities combined with CV metadata
+to provide accurate nutrition information.
 """
 
-import json
 import os
-import re
-from typing import Optional
-
+import base64
+import json
+from typing import Dict, Any, Optional, List
+from dataclasses import dataclass
+from pathlib import Path
 from loguru import logger
 
-
-# Prompt sent to Gemini alongside the meal image
-_NUTRITION_PROMPT = """You are an expert nutritionist and food analyst.
-
-Analyse the meal in this image and return ONLY a valid JSON object – no markdown fences, no extra text.
-
-Use this exact structure:
-{
-  "food_items": [
-    {
-      "food_name": "<name of food item>",
-      "serving_size": "<estimated portion, e.g. '1 medium apple (182 g)'>",
-      "calories": <integer>,
-      "protein_g": <number>,
-      "carbohydrates_g": <number>,
-      "fat_g": <number>,
-      "fiber_g": <number>,
-      "sugar_g": <number>,
-      "confidence": "<high|medium|low>"
-    }
-  ],
-  "totals": {
-    "calories": <integer>,
-    "protein_g": <number>,
-    "carbohydrates_g": <number>,
-    "fat_g": <number>
-  },
-  "analysis_notes": "<2-3 sentences of nutritional advice and observations about this meal>"
-}
-
-{cv_context}
-
-Be concise and accurate. If you cannot identify a food item clearly, use "low" confidence.
-Return ONLY the JSON – nothing else."""
-
-_CV_CONTEXT_TEMPLATE = """
-Additional context from computer-vision analysis:
-- Scale reference available: {has_scale}
-- Food items detected by YOLO: {yolo_items}
-"""
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    logger.warning("google-generativeai not installed. Install with: pip install google-generativeai")
 
 
-class GeminiClient:
-    """Wraps the Google Gemini API for food nutrition analysis."""
+@dataclass
+class NutritionInfo:
+    """Nutritional information for a food item."""
+    food_name: str
+    serving_size: str
+    calories: float
+    protein_g: float
+    carbohydrates_g: float
+    fat_g: float
+    fiber_g: float
+    sugar_g: float
+    sodium_mg: float
+    confidence: str  # "high", "medium", "low"
+    notes: Optional[str] = None
 
-    def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
+
+@dataclass 
+class NutritionResult:
+    """Complete nutrition analysis result."""
+    food_items: List[NutritionInfo]
+    total_calories: float
+    total_protein_g: float
+    total_carbs_g: float
+    total_fat_g: float
+    analysis_notes: str
+    raw_response: str
+
+
+class GeminiNutritionAnalyzer:
+    """
+    Nutrition Analyzer using Google Gemini API.
+    
+    Combines image analysis with CV metadata to provide
+    accurate nutrition estimations.
+    """
+    
+    NUTRITION_PROMPT = """You are a nutrition analysis expert. Analyze the food in this image and provide detailed nutrition information.
+
+## Computer Vision Analysis Data:
+{cv_metadata}
+
+## Your Task:
+Based on the image and the CV analysis data (especially the measured dimensions), estimate the nutritional content of each food item.
+
+## Important Guidelines:
+1. Use the size measurements from CV data to estimate portion sizes accurately
+2. If dimensions are provided in cm, use them to calculate volume/weight
+3. Provide nutrition values per the actual detected portion, not per 100g
+4. Be specific about the food items you identify
+5. If uncertain, indicate your confidence level
+
+## Response Format (JSON):
+{{
+    "food_items": [
+        {{
+            "food_name": "Food name",
+            "serving_size": "e.g., 1 medium apple (182g)",
+            "estimated_weight_g": 182,
+            "calories": 95,
+            "protein_g": 0.5,
+            "carbohydrates_g": 25,
+            "fat_g": 0.3,
+            "fiber_g": 4.4,
+            "sugar_g": 19,
+            "sodium_mg": 2,
+            "confidence": "high/medium/low",
+            "notes": "Any relevant notes about the estimation"
+        }}
+    ],
+    "total_nutrition": {{
+        "calories": 95,
+        "protein_g": 0.5,
+        "carbohydrates_g": 25,
+        "fat_g": 0.3
+    }},
+    "analysis_notes": "Overall notes about the analysis"
+}}
+
+Respond ONLY with valid JSON, no additional text."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    ):
+        """
+        Initialize the Gemini analyzer.
+        
+        Args:
+            api_key: Google Gemini API key (or set GEMINI_API_KEY env var)
+            model: Gemini model to use
+        """
+        if not GEMINI_AVAILABLE:
+            raise ImportError("google-generativeai package not installed")
+        
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        # Default to a stable, fast model; allow override via env var
-        default_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-        self.model_name = model_name or default_model
-        self._model = None
-
         if not self.api_key:
-            logger.warning(
-                "GEMINI_API_KEY is not set. Gemini analysis will use a fallback response."
-            )
-        else:
-            self._init_model()
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
-    def analyze(self, image_path: str, cv_data: dict) -> dict:
+            raise ValueError("Gemini API key required. Set GEMINI_API_KEY environment variable.")
+        
+        self.model_name = model
+        
+        # Configure Gemini
+        genai.configure(api_key=self.api_key)
+        self.model = genai.GenerativeModel(self.model_name)
+        
+        logger.info(f"Gemini analyzer initialized with model: {model}")
+    
+    def analyze(
+        self,
+        image_path: str,
+        cv_metadata: str
+    ) -> NutritionResult:
         """
-        Analyse *image_path* with Gemini and return a nutrition dict.
-
-        Falls back to a structured estimate when the API is unavailable.
+        Analyze food nutrition from image with CV metadata.
+        
+        Args:
+            image_path: Path to the food image
+            cv_metadata: Metadata text from CV pipeline
+            
+        Returns:
+            NutritionResult with detailed nutrition info
         """
-        if self._model is None:
-            logger.warning("Gemini model unavailable – returning fallback nutrition data.")
-            return self._fallback_response(cv_data)
-
-        prompt = self._build_prompt(cv_data)
-
+        # Load and encode image
+        image_data = self._load_image(image_path)
+        
+        # Create prompt with CV metadata
+        prompt = self.NUTRITION_PROMPT.format(cv_metadata=cv_metadata)
+        
         try:
-            import PIL.Image as PILImage  # type: ignore
-            img = PILImage.open(image_path)
-            response = self._model.generate_content([prompt, img])
-            raw = response.text.strip()
-            logger.debug(f"Gemini raw response length: {len(raw)} chars")
-            return self._parse_response(raw)
-        except Exception as exc:
-            logger.error(f"Gemini API call failed: {exc}")
-            return self._fallback_response(cv_data)
-
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
-
-    def _init_model(self):
-        try:
-            import google.generativeai as genai  # type: ignore
-            genai.configure(api_key=self.api_key)
-            self._model = genai.GenerativeModel(self.model_name)
-            logger.info(f"Gemini model initialised: {self.model_name}")
-        except ImportError:
-            logger.error("google-generativeai is not installed. Run: pip install google-generativeai")
-        except Exception as exc:
-            logger.error(f"Failed to initialise Gemini: {exc}")
-
-    def _build_prompt(self, cv_data: dict) -> str:
-        has_scale = cv_data.get("has_scale_reference", False)
-        yolo_items = cv_data.get("food_items", [])
-        if yolo_items:
-            yolo_str = ", ".join(
-                f"{item['name']} (conf {item['confidence']:.0%})" for item in yolo_items
-            )
-        else:
-            yolo_str = "none detected"
-
-        cv_context = _CV_CONTEXT_TEMPLATE.format(
-            has_scale="yes" if has_scale else "no",
-            yolo_items=yolo_str,
-        )
-        return _NUTRITION_PROMPT.format(cv_context=cv_context)
-
-    @staticmethod
-    def _parse_response(raw: str) -> dict:
-        """Extract JSON from the Gemini response, handling minor formatting issues."""
-        # Strip markdown code fences if present
-        cleaned = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
-        cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE).strip()
-
-        try:
-            data = json.loads(cleaned)
-        except json.JSONDecodeError:
-            # Try to extract the first JSON object from the string
-            match = re.search(r"\{.*\}", cleaned, re.DOTALL)
-            if match:
-                data = json.loads(match.group())
-            else:
-                raise ValueError(f"Could not parse Gemini response as JSON: {cleaned[:200]}")
-
-        # Ensure required keys exist with sensible defaults
-        data.setdefault("food_items", [])
-        data.setdefault("totals", {"calories": 0, "protein_g": 0, "carbohydrates_g": 0, "fat_g": 0})
-        data.setdefault("analysis_notes", "")
-        return data
-
-    @staticmethod
-    def _fallback_response(cv_data: dict) -> dict:
-        """Return a minimal valid nutrition response when Gemini is unavailable."""
-        yolo_items = cv_data.get("food_items", [])
-        food_names = [item["name"] for item in yolo_items] if yolo_items else ["meal"]
-        return {
-            "food_items": [
-                {
-                    "food_name": name,
-                    "serving_size": "1 serving",
-                    "calories": 0,
-                    "protein_g": 0,
-                    "carbohydrates_g": 0,
-                    "fat_g": 0,
-                    "fiber_g": 0,
-                    "sugar_g": 0,
-                    "confidence": "low",
-                }
-                for name in food_names
-            ],
-            "totals": {"calories": 0, "protein_g": 0, "carbohydrates_g": 0, "fat_g": 0},
-            "analysis_notes": (
-                "AI analysis is currently unavailable. "
-                "Please ensure GEMINI_API_KEY is set and the google-generativeai package is installed."
-            ),
+            # Call Gemini API
+            response = self.model.generate_content([
+                prompt,
+                image_data
+            ])
+            
+            # Parse response
+            result = self._parse_response(response.text)
+            
+            logger.info(f"Nutrition analysis complete: {result.total_calories:.0f} total calories")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Gemini analysis failed: {e}")
+            raise
+    
+    def analyze_from_bytes(
+        self,
+        image_bytes: bytes,
+        cv_metadata: str,
+        mime_type: str = "image/jpeg"
+    ) -> NutritionResult:
+        """
+        Analyze nutrition from image bytes.
+        
+        Args:
+            image_bytes: Image data as bytes
+            cv_metadata: Metadata text from CV pipeline
+            mime_type: Image MIME type
+            
+        Returns:
+            NutritionResult with detailed nutrition info
+        """
+        # Create image part
+        image_data = {
+            "mime_type": mime_type,
+            "data": base64.b64encode(image_bytes).decode("utf-8")
         }
+        
+        prompt = self.NUTRITION_PROMPT.format(cv_metadata=cv_metadata)
+        
+        try:
+            response = self.model.generate_content([
+                prompt,
+                image_data
+            ])
+            
+            return self._parse_response(response.text)
+            
+        except Exception as e:
+            logger.error(f"Gemini analysis failed: {e}")
+            raise
+    
+    def _load_image(self, image_path: str) -> Dict[str, Any]:
+        """Load image and prepare for Gemini API."""
+        path = Path(image_path)
+        
+        if not path.exists():
+            raise FileNotFoundError(f"Image not found: {image_path}")
+        
+        # Determine MIME type
+        mime_types = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".webp": "image/webp",
+            ".gif": "image/gif"
+        }
+        mime_type = mime_types.get(path.suffix.lower(), "image/jpeg")
+        
+        # Read and encode
+        with open(path, "rb") as f:
+            image_bytes = f.read()
+        
+        return {
+            "mime_type": mime_type,
+            "data": base64.b64encode(image_bytes).decode("utf-8")
+        }
+    
+    def _parse_response(self, response_text: str) -> NutritionResult:
+        """Parse Gemini response into NutritionResult."""
+        # Clean response (remove markdown code blocks if present)
+        text = response_text.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+        if text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+        
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Gemini response as JSON: {e}")
+            # Return a minimal result with the raw response
+            return NutritionResult(
+                food_items=[],
+                total_calories=0,
+                total_protein_g=0,
+                total_carbs_g=0,
+                total_fat_g=0,
+                analysis_notes="Failed to parse response",
+                raw_response=response_text
+            )
+        
+        # Parse food items
+        food_items = []
+        for item in data.get("food_items", []):
+            nutrition = NutritionInfo(
+                food_name=item.get("food_name", "Unknown"),
+                serving_size=item.get("serving_size", "1 serving"),
+                calories=float(item.get("calories", 0)),
+                protein_g=float(item.get("protein_g", 0)),
+                carbohydrates_g=float(item.get("carbohydrates_g", 0)),
+                fat_g=float(item.get("fat_g", 0)),
+                fiber_g=float(item.get("fiber_g", 0)),
+                sugar_g=float(item.get("sugar_g", 0)),
+                sodium_mg=float(item.get("sodium_mg", 0)),
+                confidence=item.get("confidence", "medium"),
+                notes=item.get("notes")
+            )
+            food_items.append(nutrition)
+        
+        # Get totals
+        totals = data.get("total_nutrition", {})
+        
+        return NutritionResult(
+            food_items=food_items,
+            total_calories=float(totals.get("calories", sum(f.calories for f in food_items))),
+            total_protein_g=float(totals.get("protein_g", sum(f.protein_g for f in food_items))),
+            total_carbs_g=float(totals.get("carbohydrates_g", sum(f.carbohydrates_g for f in food_items))),
+            total_fat_g=float(totals.get("fat_g", sum(f.fat_g for f in food_items))),
+            analysis_notes=data.get("analysis_notes", ""),
+            raw_response=response_text
+        )

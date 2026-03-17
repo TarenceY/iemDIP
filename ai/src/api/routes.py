@@ -14,6 +14,7 @@ GET  /api/generate-aruco/{id}   Generate & return an ArUco marker PNG
 import io
 import os
 import tempfile
+from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,8 +47,8 @@ app.add_middleware(
 )
 
 # Lazy-initialise the pipeline (avoids long startup times during import)
-_pipeline: "Optional[FoodNutritionPipeline]" = None
-_cv_only_pipeline: "Optional[CVPipeline]" = None
+_pipeline: Optional[FoodNutritionPipeline] = None
+_cv_only_pipeline: Optional[CVPipeline] = None
 
 
 def _get_pipeline() -> FoodNutritionPipeline:

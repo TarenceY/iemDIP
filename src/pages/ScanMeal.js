@@ -4,6 +4,39 @@ import "../styles/ScanMeal.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const AI_API_URL = process.env.REACT_APP_AI_API_URL || "http://localhost:8000";
+
+function transformDirectAIResponse(aiData) {
+  const nutrition = aiData?.nutrition || {};
+  const totals = nutrition.totals || {};
+  const foodItems = nutrition.food_items || [];
+
+  const foodNames = foodItems.map((item) => item.food_name).filter(Boolean);
+  const name = foodNames.length > 0 ? foodNames.join(", ") : "Detected meal";
+
+  const calories = Math.round(totals.calories || 0);
+  const protein = Math.round(totals.protein_g || 0);
+  const carbs = Math.round(totals.carbohydrates_g || 0);
+  const fats = Math.round(totals.fat_g || 0);
+
+  const highlights = [];
+  if (protein >= 25) highlights.push("High protein");
+  else if (protein >= 15) highlights.push("Good protein");
+  if (fats <= 10) highlights.push("Low fat");
+  if (carbs <= 30) highlights.push("Low carb");
+  if (calories <= 400) highlights.push("Low calorie");
+  if (highlights.length === 0) highlights.push("Balanced meal");
+
+  const notes = nutrition.analysis_notes || "";
+  const suggestions = notes
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 10)
+    .slice(0, 3);
+  if (suggestions.length === 0) suggestions.push("Enjoy your meal!");
+
+  return { name, calories, macros: { protein, carbs, fats }, highlights, suggestions };
+}
 
 export default function ScanMeal() {
   const navigate = useNavigate();
@@ -164,15 +197,34 @@ export default function ScanMeal() {
 
       if (userId) body.userId = userId;
 
+      let analysisResult = null;
       const resp = await fetch(`${API_URL}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
-      if (!resp.ok) throw new Error(`API error: ${resp.status}`);
-      const data = await resp.json();
-      setResult(data);
+      if (resp.ok) {
+        analysisResult = await resp.json();
+      } else if (!hasTelegramPhoto && (resp.status === 404 || resp.status === 405)) {
+        const form = new FormData();
+        form.append("image", file);
+        form.append("include_annotated", "false");
+
+        const aiResp = await fetch(`${AI_API_URL}/api/analyze`, {
+          method: "POST",
+          body: form,
+        });
+
+        if (!aiResp.ok) throw new Error(`AI API error: ${aiResp.status}`);
+        const aiData = await aiResp.json();
+        if (!aiData.success) throw new Error(aiData.error || "AI analysis failed.");
+        analysisResult = transformDirectAIResponse(aiData);
+      } else {
+        throw new Error(`API error: ${resp.status}`);
+      }
+
+      setResult(analysisResult);
       showToast("Analysis complete ✅");
     } catch (err) {
       console.error(err);
@@ -397,4 +449,3 @@ export default function ScanMeal() {
     </div>
   );
 }
-

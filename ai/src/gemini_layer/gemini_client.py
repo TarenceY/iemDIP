@@ -6,6 +6,7 @@ to provide accurate nutrition information.
 """
 
 import os
+import re
 import base64
 import json
 from typing import Dict, Any, Optional, List
@@ -185,8 +186,10 @@ Respond ONLY with valid JSON, no additional text."""
         """
         # Create image part
         image_data = {
-            "mime_type": mime_type,
-            "data": base64.b64encode(image_bytes).decode("utf-8")
+            "inline_data": {
+                "mime_type": mime_type,
+                "data": base64.b64encode(image_bytes).decode("utf-8")
+            }
         }
         
         prompt = self.NUTRITION_PROMPT.format(cv_metadata=cv_metadata)
@@ -224,28 +227,49 @@ Respond ONLY with valid JSON, no additional text."""
         with open(path, "rb") as f:
             image_bytes = f.read()
         
+        # Use the 'inline_data' wrapper required by the Gemini SDK
         return {
-            "mime_type": mime_type,
-            "data": base64.b64encode(image_bytes).decode("utf-8")
+            "inline_data": {
+                "mime_type": mime_type,
+                "data": base64.b64encode(image_bytes).decode("utf-8")
+            }
         }
     
     def _parse_response(self, response_text: str) -> NutritionResult:
         """Parse Gemini response into NutritionResult."""
-        # Clean response (remove markdown code blocks if present)
-        text = response_text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
-        
-        try:
-            data = json.loads(text)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Gemini response as JSON: {e}")
-            # Return a minimal result with the raw response
+        data = None
+
+        # Try multiple extraction strategies in order of reliability.
+        # 1. Strip markdown code fences (```json ... ``` or ``` ... ```)
+        stripped = response_text.strip()
+        if stripped.startswith("```"):
+            fence_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', stripped, re.DOTALL)
+            if fence_match:
+                try:
+                    data = json.loads(fence_match.group(1))
+                except json.JSONDecodeError:
+                    pass
+
+        # 2. The whole (stripped) text is JSON
+        if data is None:
+            try:
+                data = json.loads(stripped)
+            except json.JSONDecodeError:
+                pass
+
+        # 3. Find the outermost JSON object in the text (greedy – first '{' to last '}')
+        #    This handles Gemini prepending introductory sentences before the JSON.
+        if data is None:
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                try:
+                    data = json.loads(json_match.group())
+                except json.JSONDecodeError:
+                    pass
+
+        if data is None:
+            logger.error("Failed to parse Gemini response as JSON")
+            logger.debug(f"Raw response (first 500 chars): {response_text[:500]}")
             return NutritionResult(
                 food_items=[],
                 total_calories=0,

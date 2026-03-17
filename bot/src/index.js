@@ -1,10 +1,15 @@
 import TelegramBot from "node-telegram-bot-api";
 import axios from "axios";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
 import { sendPhotoToApi, uploadPhotoForRequest } from "./services/apiClient.js";
 import { loginUser, linkTelegramChatId } from "./services/authService.js";
 
-dotenv.config(); // reads .env at repo root or bot/.env
+// Resolve the bot's own .env file regardless of the working directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: resolve(__dirname, "../.env") });
 const token = process.env.TELEGRAM_TOKEN;
 const API_URL = process.env.API_URL || "http://localhost:3000";
 

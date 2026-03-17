@@ -184,6 +184,11 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
   let result;
   try {
     const aiData = await callAIService(imageBuffer, mimeType);
+    if (!aiData.success) {
+      return res.status(502).json({
+        message: aiData.error || "AI analysis returned no results. Please try again with a clearer image.",
+      });
+    }
     result = transformAIResponse(aiData);
   } catch (err) {
     console.error("AI analysis error:", err.message);

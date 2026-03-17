@@ -142,6 +142,21 @@ Open `http://localhost:3001` in your browser.
 
 ---
 
+## Quick Steps to Reach the Analysis Part
+
+1. Start the API server (`api/src`) and React webapp (repo root).
+2. Open `http://localhost:3001`.
+3. Log in to your account.
+4. Go to **Scan Meal**.
+5. Upload a meal photo:
+   - either **Choose file** (from your device), or
+   - **Request photo** (from Telegram), then send the photo in Telegram.
+6. Wait for the photo preview to appear.
+7. Click **Analyze**.
+8. View the analysis result in the **Result** panel (calories, macros, highlights, suggestions).
+
+---
+
 ## Testing the Full Flow
 
 ### A – Register & Log In via the Webapp

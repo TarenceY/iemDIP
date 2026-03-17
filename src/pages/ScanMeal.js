@@ -5,6 +5,12 @@ import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 const AI_API_URL = process.env.REACT_APP_AI_API_URL || "http://localhost:8000";
+const HIGH_PROTEIN_THRESHOLD = 25;
+const GOOD_PROTEIN_THRESHOLD = 15;
+const LOW_FAT_THRESHOLD = 10;
+const LOW_CARB_THRESHOLD = 30;
+const LOW_CALORIE_THRESHOLD = 400;
+const MIN_SUGGESTION_LENGTH = 10;
 
 function transformDirectAIResponse(aiData) {
   const nutrition = aiData?.nutrition || {};
@@ -20,18 +26,18 @@ function transformDirectAIResponse(aiData) {
   const fats = Math.round(totals.fat_g || 0);
 
   const highlights = [];
-  if (protein >= 25) highlights.push("High protein");
-  else if (protein >= 15) highlights.push("Good protein");
-  if (fats <= 10) highlights.push("Low fat");
-  if (carbs <= 30) highlights.push("Low carb");
-  if (calories <= 400) highlights.push("Low calorie");
+  if (protein >= HIGH_PROTEIN_THRESHOLD) highlights.push("High protein");
+  else if (protein >= GOOD_PROTEIN_THRESHOLD) highlights.push("Good protein");
+  if (fats <= LOW_FAT_THRESHOLD) highlights.push("Low fat");
+  if (carbs <= LOW_CARB_THRESHOLD) highlights.push("Low carb");
+  if (calories <= LOW_CALORIE_THRESHOLD) highlights.push("Low calorie");
   if (highlights.length === 0) highlights.push("Balanced meal");
 
   const notes = nutrition.analysis_notes || "";
   const suggestions = notes
     .split(/[.!?]+/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 10)
+    .filter((s) => s.length > MIN_SUGGESTION_LENGTH)
     .slice(0, 3);
   if (suggestions.length === 0) suggestions.push("Enjoy your meal!");
 
@@ -204,9 +210,11 @@ export default function ScanMeal() {
         body: JSON.stringify(body),
       });
 
+      const shouldFallbackToAI = !hasTelegramPhoto && !resp.ok;
+
       if (resp.ok) {
         analysisResult = await resp.json();
-      } else if (!hasTelegramPhoto && (resp.status === 404 || resp.status === 405)) {
+      } else if (shouldFallbackToAI) {
         const form = new FormData();
         form.append("image", file);
         form.append("include_annotated", "false");
@@ -218,7 +226,7 @@ export default function ScanMeal() {
 
         if (!aiResp.ok) throw new Error(`AI API error: ${aiResp.status}`);
         const aiData = await aiResp.json();
-        if (!aiData.success) throw new Error(aiData.error || "AI analysis failed.");
+        if (!aiData.success) throw new Error(aiData.error || "Unable to analyze meal using fallback AI service.");
         analysisResult = transformDirectAIResponse(aiData);
       } else {
         throw new Error(`API error: ${resp.status}`);

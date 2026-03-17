@@ -123,8 +123,8 @@ class FoodDetector:
                 names = result.names
                 
                 for box in boxes:
-                    # Get bounding box (convert numpy int to plain int for JSON safety)
-                    x1, y1, x2, y2 = (int(v) for v in box.xyxy[0].cpu().numpy().astype(int))
+                    # Get bounding box (convert numpy values to plain int for JSON safety)
+                    x1, y1, x2, y2 = [int(v) for v in box.xyxy[0].cpu().numpy()]
                     
                     # Get class info
                     class_id = int(box.cls[0].cpu().numpy())

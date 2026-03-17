@@ -2,6 +2,8 @@
 
 **SeeFood** is a full-stack web + Telegram bot application that lets users photograph their meals and receive AI-powered nutritional analysis.
 
+> 📖 **New to the project?** See the **[Setup & Usage Guide (SETUP_GUIDE.md)](SETUP_GUIDE.md)** for a step-by-step walkthrough from installation to your first meal analysis.
+
 ## Tech Stack
 
 | Layer | Technology |

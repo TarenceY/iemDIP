@@ -96,15 +96,11 @@ class FoodDetector:
             pixels_per_cm: Scale factor for size measurement (from ArUco)
             
         Returns:
-            List of FoodDetection objects (empty list on any failure)
+            List of FoodDetection objects
         """
         if self.model is None:
-            try:
-                self.load_model()
-            except Exception as e:
-                logger.warning(f"YOLO model not available, skipping food detection: {e}")
-                return []
-
+            self.load_model()
+        
         detections = []
         
         try:
@@ -123,8 +119,8 @@ class FoodDetector:
                 names = result.names
                 
                 for box in boxes:
-                    # Get bounding box (convert numpy values to plain int for JSON safety)
-                    x1, y1, x2, y2 = [int(v) for v in box.xyxy[0].cpu().numpy()]
+                    # Get bounding box
+                    x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
                     
                     # Get class info
                     class_id = int(box.cls[0].cpu().numpy())
@@ -165,7 +161,7 @@ class FoodDetector:
             
         except Exception as e:
             logger.error(f"Detection failed: {e}")
-            return detections
+            raise
         
         return detections
     

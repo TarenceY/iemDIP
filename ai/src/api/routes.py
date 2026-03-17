@@ -45,7 +45,7 @@ class NutritionTotals(BaseModel):
 class CVFoodItem(BaseModel):
     name: str
     confidence: float
-    bbox: list
+    bbox: tuple
     width_cm: Optional[float]
     height_cm: Optional[float]
     diameter_cm: Optional[float]
@@ -138,14 +138,10 @@ def create_app(
                 detail=f"Invalid file type. Allowed: {allowed_types}"
             )
         
-        # Determine file suffix safely (filename may be None)
-        filename = image.filename or "upload.jpg"
-        suffix = Path(filename).suffix or ".jpg"
-
         try:
             # Save uploaded image temporarily
             with tempfile.NamedTemporaryFile(
-                suffix=suffix,
+                suffix=Path(image.filename).suffix,
                 delete=False
             ) as tmp:
                 content = await image.read()
@@ -162,13 +158,10 @@ def create_app(
             # Encode annotated image if available
             annotated_base64 = None
             if include_annotated and result.annotated_image_path:
-                try:
-                    with open(result.annotated_image_path, "rb") as f:
-                        annotated_base64 = base64.b64encode(f.read()).decode()
-                    # Clean up annotated image
-                    Path(result.annotated_image_path).unlink(missing_ok=True)
-                except OSError:
-                    pass
+                with open(result.annotated_image_path, "rb") as f:
+                    annotated_base64 = base64.b64encode(f.read()).decode()
+                # Clean up annotated image
+                Path(result.annotated_image_path).unlink(missing_ok=True)
             
             # Clean up temp file
             Path(tmp_path).unlink(missing_ok=True)
@@ -182,8 +175,6 @@ def create_app(
                 error=result.error
             )
             
-        except HTTPException:
-            raise
         except Exception as e:
             logger.error(f"Analysis failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -202,12 +193,9 @@ def create_app(
                 detail=f"Invalid file type. Allowed: {allowed_types}"
             )
         
-        filename = image.filename or "upload.jpg"
-        suffix = Path(filename).suffix or ".jpg"
-
         try:
             with tempfile.NamedTemporaryFile(
-                suffix=suffix,
+                suffix=Path(image.filename).suffix,
                 delete=False
             ) as tmp:
                 content = await image.read()
@@ -227,8 +215,6 @@ def create_app(
                 "metadata_text": cv_result.metadata_text
             }
             
-        except HTTPException:
-            raise
         except Exception as e:
             logger.error(f"CV analysis failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))

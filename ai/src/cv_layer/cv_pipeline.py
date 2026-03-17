@@ -81,7 +81,7 @@ class CVPipeline:
         # Calculate scale factor
         pixels_per_cm = None
         if aruco_results:
-            pixels_per_cm = float(np.mean([r.pixels_per_cm for r in aruco_results]))
+            pixels_per_cm = np.mean([r.pixels_per_cm for r in aruco_results])
             logger.info(f"Scale factor: {pixels_per_cm:.2f} pixels/cm")
         else:
             logger.warning("No ArUco marker detected - measurements will be approximate")
@@ -179,7 +179,6 @@ class CVPipeline:
     def get_detection_summary(self, cv_result: CVResult) -> Dict[str, Any]:
         """
         Get a summary dict of CV results for API response.
-        All values are converted to JSON-safe Python native types.
         
         Args:
             cv_result: CVResult from process()
@@ -189,23 +188,23 @@ class CVPipeline:
         """
         return {
             "has_scale_reference": cv_result.pixels_per_cm is not None,
-            "pixels_per_cm": float(cv_result.pixels_per_cm) if cv_result.pixels_per_cm is not None else None,
+            "pixels_per_cm": cv_result.pixels_per_cm,
             "food_items": [
                 {
                     "name": det.class_name,
-                    "confidence": float(det.confidence),
-                    "bbox": [int(det.bbox[0]), int(det.bbox[1]), int(det.bbox[2]), int(det.bbox[3])],
-                    "width_cm": float(det.width_cm) if det.width_cm is not None else None,
-                    "height_cm": float(det.height_cm) if det.height_cm is not None else None,
-                    "diameter_cm": float(det.estimated_diameter_cm) if det.estimated_diameter_cm is not None else None
+                    "confidence": det.confidence,
+                    "bbox": det.bbox,
+                    "width_cm": det.width_cm,
+                    "height_cm": det.height_cm,
+                    "diameter_cm": det.estimated_diameter_cm
                 }
                 for det in cv_result.food_detections
             ],
             "aruco_markers": [
                 {
-                    "id": int(ar.marker_id),
-                    "center": [int(ar.center[0]), int(ar.center[1])],
-                    "pixels_per_cm": float(ar.pixels_per_cm)
+                    "id": ar.marker_id,
+                    "center": ar.center,
+                    "pixels_per_cm": ar.pixels_per_cm
                 }
                 for ar in cv_result.aruco_results
             ]

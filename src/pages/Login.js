@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
+import bgImage from "../assets/images/bg-food.png";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -26,7 +27,10 @@ export default function Login() {
       const resp = await fetch(`${API_URL}/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+        }),
       });
 
       const data = await resp.json();
@@ -49,75 +53,84 @@ export default function Login() {
     }
   };
 
+  const onKeyDown = (e) => {
+    if (e.key === "Enter") handleLogin();
+  };
+
   return (
-    <div className="login-page">
-       {/* LEFT BRAND PANEL */}
-      <div className="login-left">
-        <div className="brand">
-          <img src={seefoodLogo} alt="SeeFood logo" className="brand-logo" />
-          <div className="brand-name">SeeFood</div>
-        </div>
+    <div
+      className="login-page"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
 
-        <h1>Welcome back 👋</h1>
-        <p>
-          Track nutrition from ready meals, and plan what to cook using ingredients you already have —
-          all in one place.
-        </p>
+      <main className="login-shell">
+        <section className="login-left">
+          <div className="login-left-card">
+            <p className="login-kicker">SMART FOOD TRACKING</p>
+            <h1>Welcome back</h1>
+            <p className="login-description">
+              Log in to track your meals, check your nutrition, and plan what to
+              cook with the ingredients you already have.
+            </p>
 
-        <div className="left-badges">
-          <div className="badge">AI Nutrition</div>
-          <div className="badge">Fridge Scan</div>
-          <div className="badge">Meal Planner</div>
-        </div>
-
-        <div className="left-footer">
-          <span>IM3180 • Group IE01</span>
-        </div>
-      </div>
-      {/* RIGHT SIDE */}
-      <div className="login-right">
-        <div className="login-card">
-          <div className="login-header">
-            <h2>Log in</h2>
-            <p>Use your email to continue.</p>
+            <div className="left-badges">
+              <span className="badge">AI Nutrition</span>
+              <span className="badge">Fridge Scan</span>
+              <span className="badge">Meal Planner</span>
+            </div>
           </div>
+        </section>
 
-          {error && <div className="login-error">{error}</div>}
+        <section className="login-right">
+          <div className="login-card">
+            <div className="login-header">
+              <h2>Log in</h2>
+              <p>Use your email to continue to SeeFood.</p>
+            </div>
 
-          <div className="field">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="example@email.com"
-              className="login-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            {error && <div className="login-error">{error}</div>}
+
+            <div className="field">
+              <label>Email</label>
+              <input
+                type="email"
+                placeholder="example@email.com"
+                className="login-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={onKeyDown}
+              />
+            </div>
+
+            <div className="field">
+              <label>Password</label>
+              <input
+                type="password"
+                placeholder="Enter your password"
+                className="login-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={onKeyDown}
+              />
+            </div>
+
+            <button className="login-btn" onClick={handleLogin} disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Log in"}
+            </button>
+
+            <p className="signup-text">
+              Don&apos;t have an account?{" "}
+              <span className="signup-link" onClick={() => navigate("/signup")}>
+                Sign up
+              </span>
+            </p>
           </div>
-
-          <div className="field">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="login-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          <button className="login-btn" onClick={handleLogin} disabled={isLoading}>
-            {isLoading ? "Logging in…" : "Login"}
-          </button>
-
-          <p className="signup-text">
-            Don't have an account?{" "}
-            <span className="signup-link" onClick={() => navigate("/signup")}>
-              Sign Up
-            </span>
-          </p>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

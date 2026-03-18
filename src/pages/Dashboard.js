@@ -108,7 +108,6 @@ export default function Dashboard() {
       <header className="dash-header">
         <div className="dash-brand" role="button" tabIndex={0} onClick={() => navigate("/home")}>
           <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
         </div>
 
         <nav className="profile-nav">

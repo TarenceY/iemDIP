@@ -1,33 +1,58 @@
-.scanmeal-container {
-  min-height: 100vh;
-  background: #f9fafb;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+:root {
+  --bg: #f6f2e9;
+  --card: #fbfaf7;
+  --ink: #1f2937;
+  --muted: #6b7280;
+  --border: #e7e1d6;
+  --green: #1f5a3b;
+  --green2: #2f7a52;
+  --green3: #bed255;
+  --panel: #dfeaa6;
+  --shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+  --danger-bg: #fff1f2;
+  --danger-border: #fecdd3;
+  --danger-text: #9f1239;
 }
 
-/* HEADER (same sizing as dashboard) */
+.scanmeal-container {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink);
+}
+
+/* HEADER */
 .scanmeal-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 32px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
   gap: 16px;
+
+  padding: 14px 32px;
+  background: rgba(251, 250, 247, 0.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
 }
 
 .scanmeal-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 800;
+  font-weight: 900;
   font-size: 20px;
-  color: #16a34a;
+  color: var(--green);
   cursor: pointer;
   user-select: none;
 }
 
 .scanmeal-brand img {
   height: 34px;
+  width: auto;
+  object-fit: contain;
 }
 
 .scanmeal-nav {
@@ -39,61 +64,75 @@
 /* shared buttons */
 .nav-btn {
   background: transparent;
-  border: 1px solid #e5e7eb;
+  border: 1px solid transparent;
   padding: 8px 14px;
   border-radius: 999px;
   cursor: pointer;
-  font-weight: 700;
-  color: #111827;
+  font-weight: 800;
+  color: var(--ink);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
 .nav-btn:hover {
-  background: #f3f4f6;
+  background: rgba(190, 210, 85, 0.35);
+}
+
+.nav-btn.active {
+  background: rgba(31, 90, 59, 0.12);
+  color: var(--green);
+  border-color: rgba(31, 90, 59, 0.16);
 }
 
 /* content */
 .scanmeal-content {
-  padding: 36px 8%;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 40px 8%;
 }
 
+/* hero */
 .scanmeal-hero {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 22px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
-  margin-bottom: 18px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
+
+  margin-bottom: 20px;
+  padding: 24px 26px;
+
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
 }
 
 .scanmeal-hero h1 {
   margin: 0 0 6px;
-  font-size: 30px;
+  font-size: 34px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--green);
 }
 
 .subtitle {
   margin: 0;
-  color: #6b7280;
-  font-size: 14px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .hero-actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 /* grid */
 .scanmeal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 20px;
 }
 
 @media (max-width: 980px) {
@@ -102,34 +141,39 @@
   }
 }
 
+/* panels */
 .panel {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: var(--shadow);
 }
 
 .panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .panel-head h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--green);
 }
 
 .pill {
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background: rgba(31, 90, 59, 0.08);
+  border: 1px solid rgba(31, 90, 59, 0.12);
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  color: #374151;
-  font-weight: 700;
+  color: var(--green);
+  font-weight: 800;
 }
 
 /* dropzone */
@@ -137,41 +181,57 @@
   border: 1px dashed #d1d5db;
   border-radius: 18px;
   background: #fafafa;
-  height: 260px;
+  min-height: 260px;
   display: grid;
   place-items: center;
   overflow: hidden;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
 .dropzone.has-preview {
   border-style: solid;
   background: #fff;
+  height: auto;
+}
+
+.preview {
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.dropzone:hover {
+  border-color: rgba(31, 90, 59, 0.22);
+  background: #fbf8f2;
 }
 
 .dropzone-inner {
   text-align: center;
-  padding: 18px;
+  padding: 20px;
+  max-width: 320px;
 }
 
 .drop-emoji {
-  font-size: 34px;
+  font-size: 36px;
   margin-bottom: 10px;
 }
 
 .drop-title {
   font-weight: 900;
+  font-size: 16px;
   margin-bottom: 6px;
+  color: var(--ink);
 }
 
 .drop-text {
-  color: #6b7280;
+  color: var(--muted);
   font-size: 13px;
-}
-
-.preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  line-height: 1.5;
 }
 
 /* upload actions */
@@ -179,7 +239,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 14px;
   flex-wrap: wrap;
 }
 
@@ -190,16 +250,20 @@
   align-items: center;
   justify-content: center;
 
-  border: 1px solid #d1d5db;
-  background: transparent;
+  border: 1px solid var(--border);
+  background: #f7f3ea;
+  color: var(--ink);
   padding: 10px 14px;
   border-radius: 999px;
   cursor: pointer;
   font-weight: 900;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
 .file-btn:hover {
-  background: #f3f4f6;
+  background: #efe8da;
+  border-color: #d9cfbe;
+  transform: translateY(-1px);
 }
 
 .file-btn input {
@@ -213,15 +277,17 @@
   padding: 10px 18px;
   border-radius: 999px;
   border: none;
-  background: #22c55e;
+  background: linear-gradient(90deg, var(--green2), var(--green));
   color: white;
   font-weight: 900;
   cursor: pointer;
   white-space: nowrap;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
-.primary-btn:hover {
-  background: #16a34a;
+.primary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(31, 90, 59, 0.18);
 }
 
 .primary-btn:disabled {
@@ -231,15 +297,19 @@
 
 .ghost-btn {
   background: transparent;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
+  color: var(--ink);
   padding: 10px 14px;
   border-radius: 999px;
   cursor: pointer;
   font-weight: 900;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
-.ghost-btn:hover {
-  background: #f3f4f6;
+.ghost-btn:hover:not(:disabled) {
+  background: #f3ede2;
+  border-color: #d8cfbf;
+  transform: translateY(-1px);
 }
 
 .ghost-btn:disabled {
@@ -250,48 +320,55 @@
 .hint {
   margin-top: 12px;
   padding: 12px 14px;
-  border-radius: 14px;
-  background: #ecfdf5;
-  border: 1px solid #bbf7d0;
-  color: #166534;
+  border-radius: 16px;
+  background: #eef8ef;
+  border: 1px solid #cfe8d2;
+  color: #255f35;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 /* result */
 .empty {
-  border: 1px dashed #d1d5db;
-  border-radius: 18px;
-  padding: 22px;
+  border: 1.5px dashed #d8d1c3;
+  border-radius: 22px;
+  padding: 24px;
   text-align: center;
-  background: #fff;
+  background: #f8f4ec;
 }
 
 .empty-title {
   font-weight: 900;
+  font-size: 15px;
   margin-bottom: 6px;
+  color: var(--ink);
 }
 
 .empty-text {
-  color: #6b7280;
+  color: var(--muted);
   font-size: 13px;
+  line-height: 1.5;
 }
 
 .result-top {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .result-name {
   font-weight: 1000;
-  font-size: 18px;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--green);
 }
 
 .result-sub {
-  color: #374151;
+  color: var(--muted);
   font-size: 13px;
+  margin-top: 4px;
 }
 
 .tag {
@@ -299,40 +376,43 @@
   font-weight: 900;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: #fffdf9;
+  color: var(--ink);
   height: fit-content;
 }
 
 .tag.tracked {
-  border-color: #bbf7d0;
-  background: #ecfdf5;
-  color: #166534;
+  border-color: #cde7d1;
+  background: #eef8ef;
+  color: #255f35;
 }
 
 .macro-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .macro {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 12px;
-  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 12px;
+  background: #fffdf9;
   text-align: center;
 }
 
 .macro-val {
   font-weight: 1000;
-  font-size: 16px;
+  font-size: 18px;
+  color: var(--green);
 }
 
 .macro-lbl {
+  margin-top: 4px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--muted);
   font-weight: 900;
 }
 
@@ -340,7 +420,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .chip {
@@ -348,22 +428,26 @@
   font-weight: 900;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: #fffdf9;
+  color: var(--ink);
 }
 
 .suggestions .section-label {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--muted);
   font-weight: 1000;
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .suggestions ul {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   padding-left: 18px;
-  color: #374151;
+  color: #3f4a59;
   font-size: 13px;
+  line-height: 1.6;
 }
 
 .result-actions {
@@ -379,7 +463,7 @@
   bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
-  background: #111827;
+  background: #1f2937;
   color: #fff;
   padding: 10px 14px;
   border-radius: 999px;
@@ -388,13 +472,13 @@
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
 }
 
-/* ── Telegram upload section ──────────────────────────────────────────── */
+/* Telegram upload section */
 .tg-upload-section {
   margin-top: 14px;
   padding: 14px;
-  border-radius: 14px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  border-radius: 18px;
+  background: #eef5ff;
+  border: 1px solid #d7e5ff;
 }
 
 .tg-upload-label {
@@ -403,7 +487,7 @@
   gap: 6px;
   font-weight: 800;
   font-size: 14px;
-  color: #1d4ed8;
+  color: #2957c8;
   margin-bottom: 10px;
 }
 
@@ -420,17 +504,18 @@
 .tg-username-input {
   flex: 1;
   min-width: 0;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border-radius: 999px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid #c8dafd;
   font-size: 14px;
   background: #fff;
   outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .tg-username-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: #5b87f0;
+  box-shadow: 0 0 0 3px rgba(91, 135, 240, 0.16);
 }
 
 .tg-username-input:disabled {
@@ -439,19 +524,21 @@
 }
 
 .tg-btn {
-  padding: 8px 16px;
+  padding: 10px 16px;
   border-radius: 999px;
   border: none;
-  background: #3b82f6;
+  background: #4f7df0;
   color: #fff;
   font-weight: 800;
   font-size: 13px;
   cursor: pointer;
   white-space: nowrap;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
 .tg-btn:hover:not(:disabled) {
-  background: #2563eb;
+  background: #3f6fe8;
+  transform: translateY(-1px);
 }
 
 .tg-btn:disabled {
@@ -461,12 +548,13 @@
 
 .tg-hint {
   margin-top: 8px;
-  font-size: 12px;
-  color: #1e40af;
   margin-bottom: 0;
+  font-size: 12px;
+  color: #3450a3;
+  line-height: 1.5;
 }
 
-/* ── Divider between Telegram and file-pick ───────────────────────────── */
+/* Divider between Telegram and file-pick */
 .upload-divider {
   display: flex;
   align-items: center;
@@ -482,15 +570,69 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: #e5e7eb;
+  background: #ddd6c8;
 }
 
-/* Pulsing spinner for "waiting for Telegram" state */
+/* Pulsing spinner for waiting for Telegram */
 @keyframes tg-pulse {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  50% { opacity: 0.4; }
 }
 
 .tg-spin {
   animation: tg-pulse 1.4s ease-in-out infinite;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+  .scanmeal-content {
+    padding: 28px 16px 36px;
+  }
+
+  .scanmeal-hero {
+    padding: 22px;
+  }
+
+  .scanmeal-hero h1 {
+    font-size: 28px;
+  }
+
+  .macro-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .scanmeal-header {
+    padding: 12px 18px;
+    flex-wrap: wrap;
+  }
+
+  .panel,
+  .scanmeal-hero {
+    border-radius: 20px;
+  }
+
+  .dropzone {
+    height: 230px;
+  }
+
+  .result-top {
+    flex-direction: column;
+  }
+
+  .result-actions,
+  .upload-actions,
+  .tg-input-row,
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-btn,
+  .primary-btn,
+  .ghost-btn,
+  .tg-btn {
+    justify-content: center;
+  }
 }

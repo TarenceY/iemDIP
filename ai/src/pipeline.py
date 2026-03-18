@@ -7,6 +7,8 @@ Main pipeline that orchestrates:
 """
 
 import os
+from dotenv import load_dotenv
+load_dotenv(override=True)
 import cv2
 import numpy as np
 from typing import Dict, Any, Optional, Union
@@ -225,7 +227,8 @@ class FoodNutritionPipeline:
                 "carbohydrates_g": result.total_carbs_g,
                 "fat_g": result.total_fat_g
             },
-            "analysis_notes": result.analysis_notes
+            "analysis_notes": result.analysis_notes,
+            "backend_data": result.to_backend_data()
         }
     
     def get_cv_only(self, image_path: str) -> CVResult:

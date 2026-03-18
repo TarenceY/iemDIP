@@ -221,7 +221,8 @@ exports.photoUpload = async (req, res) => {
 exports.serveLocalPhoto = async (req, res) => {
   const { requestId } = req.params;
   // Sanitise requestId to prevent path traversal
-  if (!/^[0-9a-f-]{36}$/.test(requestId)) {
+  if (!/^[0-9a-fA-F-]{36}$/i.test(requestId)) {
+
     return res.status(400).json({ message: "Invalid requestId" });
   }
 

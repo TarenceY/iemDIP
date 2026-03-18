@@ -22,4 +22,5 @@ router.post("/login", loginLimiter, UsersController.login);
 router.put("/profile/:id", UsersController.updateProfile);
 router.get("/:id", UsersController.getUserInfo);
 
+
 module.exports = router;

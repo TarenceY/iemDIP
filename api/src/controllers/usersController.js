@@ -11,12 +11,14 @@ exports.register = async (req, res) => {
 
     // Check if email already exists
     const existingUser = await User.findOne({ email: normalisedEmail });
+
     if (existingUser) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
     // Check if username already exists
     const existingUsername = await User.findOne({ username: normalisedUsername });
+
     if (existingUsername) {
       return res.status(400).json({ message: "Username already taken" });
     }
@@ -26,6 +28,7 @@ exports.register = async (req, res) => {
     const user = new User({
       username: normalisedUsername,
       email: normalisedEmail,
+
       password_hash,
       age,
       gender,
@@ -54,6 +57,7 @@ exports.login = async (req, res) => {
       user = await User.findOne({ email: email.trim().toLowerCase() });
     } else if (username) {
       user = await User.findOne({ username: username.trim() });
+
     } else {
       return res.status(400).json({ message: "Username or email is required" });
     }
@@ -82,6 +86,7 @@ exports.updateProfile = async (req, res) => {
     if (restrictions !== undefined) updates.restrictions = restrictions;
     if (dislikes !== undefined) updates.dislikes = dislikes;
     if (goals !== undefined) updates.goals = goals;
+
     if (telegramChatId !== undefined) updates.telegramChatId = telegramChatId;
     if (telegramUsername !== undefined) updates.telegramUsername = telegramUsername;
 

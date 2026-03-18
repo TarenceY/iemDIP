@@ -23,8 +23,12 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: "10mb" }));
 app.use(express.raw({ type: "application/octet-stream", limit: "10mb" }));
 
+// Routes
 const usersRoutes = require("./routes/users");
 app.use("/users", usersRoutes);
+
+const recipesRoutes = require("./routes/recipes");
+app.use("/recipes", recipesRoutes);
 
 const telegramRoutes = require("./routes/telegram");
 app.use("/telegram", telegramRoutes);
@@ -189,6 +193,7 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
         message: aiData.error || "AI analysis returned no results. Please try again with a clearer image.",
       });
     }
+
     result = transformAIResponse(aiData);
   } catch (err) {
     console.error("AI analysis error:", err.message);
@@ -247,3 +252,6 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = app;
+

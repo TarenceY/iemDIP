@@ -17,10 +17,11 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.2.1",
+    "express-rate-limit": "^8.2.2",
     "mongoose": "^9.1.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
   }
 }
+

@@ -47,7 +47,6 @@ export default function Profile() {
           onClick={() => navigate("/home")}
         >
           <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
         </div>
 
         <nav className="profile-nav">

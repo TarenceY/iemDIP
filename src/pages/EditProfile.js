@@ -109,7 +109,6 @@ export default function EditProfile() {
           onClick={() => navigate("/home")}
         >
           <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
         </div>
 
         <nav className="profile-nav">

@@ -1,14 +1,35 @@
 // Home.js
-import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import "../styles/Home.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
 export default function Home() {
   const navigate = useNavigate();
+  const userId = useMemo(() => localStorage.getItem("seefood_user_id") || "", []);
+  const fallbackUsername = localStorage.getItem("seefood_username") || "";
 
-  //change later when you have auth user info
-  const name = useMemo(() => "there", []);
+  const [username, setUsername] = useState(fallbackUsername);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    fetch(`${API_URL}/users/${userId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const name = data.username || fallbackUsername || "";
+        setUsername(name);
+        if (name) localStorage.setItem("seefood_username", name);
+      })
+      .catch(() => {
+        setUsername(fallbackUsername);
+      });
+  }, [userId, fallbackUsername]);
 
   return (
     <div className="home-container">
@@ -24,7 +45,6 @@ export default function Home() {
           }}
         >
           <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
         </div>
 
         <nav className="profile-nav">
@@ -53,7 +73,9 @@ export default function Home() {
         <section className="home-panel">
           <div className="panel-head">
             <div>
-              <h1 className="welcome">Welcome back, {name}</h1>
+              <h1 className="welcome">
+                Welcome back{username ? `, ${username}` : ""} !
+              </h1>
               <p className="welcome-sub">Let’s keep you on track today.</p>
             </div>
           </div>

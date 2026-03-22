@@ -99,26 +99,26 @@ export default function Profile() {
                 <span className="pill">Summary</span>
               </div>
 
-              <div className="summary-grid">
-                <div className="summary-item">
-                  <div className="summary-label">Username</div>
-                  <div className="summary-value">{profile.username || "—"}</div>
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <div className="summary-label">Username</div>
+                    <div className="summary-value">{profile.username || "—"}</div>
                 </div>
 
                 <div className="summary-item">
                   <div className="summary-label">Email</div>
                   <div className="summary-value">{profile.email || "—"}</div>
-                </div>
+                  </div>
 
-                <div className="summary-item">
-                  <div className="summary-label">Age</div>
-                  <div className="summary-value">{profile.age ?? "—"}</div>
-                </div>
+                  <div className="summary-item">
+                    <div className="summary-label">Age</div>
+                    <div className="summary-value">{profile.age ?? "—"}</div>
+                  </div>
 
-                <div className="summary-item">
-                  <div className="summary-label">Gender</div>
-                  <div className="summary-value">{profile.gender || "—"}</div>
-                </div>
+                  <div className="summary-item">
+                    <div className="summary-label">Gender</div>
+                    <div className="summary-value">{profile.gender || "—"}</div>
+                  </div>
 
                 <div className="summary-item">
                   <div className="summary-label">Goals</div>

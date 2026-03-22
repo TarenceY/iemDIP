@@ -2,18 +2,6 @@
 @import "./Profile.css";
 
 /* Only layout tweaks for edit page */
-.editprofile-container {
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--ink);
-}
-
-.editprofile-content {
-  padding: 50px 8%;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
 .editprofile-hero {
   background: var(--card);
   border: 1px solid var(--border);

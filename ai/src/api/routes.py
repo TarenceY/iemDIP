@@ -11,6 +11,8 @@ from typing import Optional
 from pathlib import Path
 from datetime import datetime
 
+import numpy as np
+
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
@@ -58,6 +60,19 @@ class AnalysisResponse(BaseModel):
     nutrition: dict
     annotated_image_base64: Optional[str] = None
     error: Optional[str] = None
+
+
+def _to_json_safe(value):
+    """Recursively convert NumPy types into JSON-serializable Python types."""
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, dict):
+        return {k: _to_json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_json_safe(v) for v in value]
+    return value
 
 
 def create_app(
@@ -169,8 +184,8 @@ def create_app(
             return AnalysisResponse(
                 success=result.success,
                 timestamp=datetime.utcnow().isoformat(),
-                cv_analysis=result.cv_data,
-                nutrition=result.nutrition_data,
+                cv_analysis=_to_json_safe(result.cv_data),
+                nutrition=_to_json_safe(result.nutrition_data),
                 annotated_image_base64=annotated_base64,
                 error=result.error
             )
@@ -211,7 +226,7 @@ def create_app(
             return {
                 "success": True,
                 "timestamp": datetime.utcnow().isoformat(),
-                "cv_analysis": pipe.cv_pipeline.get_detection_summary(cv_result),
+                "cv_analysis": _to_json_safe(pipe.cv_pipeline.get_detection_summary(cv_result)),
                 "metadata_text": cv_result.metadata_text
             }
             

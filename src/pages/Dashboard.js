@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Dashboard.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg";
+import AppLayout from "../components/AppLayout";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -103,142 +103,113 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="dash-container">
-      {/* TOP NAV */}
-      <header className="dash-header">
-        <div className="dash-brand" role="button" tabIndex={0} onClick={() => navigate("/home")}>
-          <img src={seefoodLogo} alt="SeeFood logo" />
-        </div>
+    <AppLayout activePage="dashboard">
+      <section className="dash-hero">
+        <h1>My Health Dashboard</h1>
+        <p className="dash-subtitle">
+          Track meals, manage groceries, and view recent activity — all in one place.
+        </p>
+      </section>
 
-        <nav className="profile-nav">
-          <button className="nav-btn" onClick={() => navigate("/home")}>
-            Home
-          </button>
-          <button className="nav-btn active" onClick={() => navigate("/dashboard")}>
-            Dashboard
-          </button>
-          <button className="nav-btn" onClick={() => navigate("/history")}>
-            History
-          </button>
-          <button className="nav-btn" onClick={() => navigate("/profile")}>
-            Profile
-          </button>
-        </nav>
-
-        <button className="nav-btn" onClick={() => navigate("/login")}>
-          Log out
-        </button>
-      </header>
-
-      {/* PAGE */}
-      <main className="dash-content">
-        <section className="dash-hero">
-          <h1>My Health Dashboard</h1>
-          <p className="dash-subtitle">
-            Track meals, manage groceries, and view recent activity — all in one place.
-          </p>
-        </section>
-
-        {/* TOP GRID (left summary, right grocery list) */}
-        <section className="dash-grid">
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Overview</h2>
-              <span className="pill">This week</span>
-            </div>
-
-            <div className="stats-grid">
-              {stats.map((s) => (
-                <div className="stat" key={s.label}>
-                  <div className="stat-value">{s.value}</div>
-                  <div className="stat-label">{s.label}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="panel-note">
-              Tip: After scanning meals/ingredients, save results to history so you can see trends here.
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Grocery list</h2>
-              <span className="pill">{groceryItems.filter((x) => !x.checked).length} left</span>
-            </div>
-
-            <div className="add-row">
-              <input
-                className="text-input"
-                value={newItem}
-                onChange={(e) => setNewItem(e.target.value)}
-                onKeyDown={onKeyDown}
-                placeholder="Add an item (e.g., oats)"
-                aria-label="Add grocery item"
-              />
-              <button className="primary-btn" onClick={addItem}>
-                Add
-              </button>
-            </div>
-
-            <div className="list">
-              {groceryItems.map((item) => (
-                <div className="list-row" key={item.id}>
-                  <label className="check">
-                    <input
-                      type="checkbox"
-                      checked={item.checked}
-                      onChange={() => toggleItem(item.id)}
-                    />
-                    <span className="check-ui" />
-                  </label>
-
-                  <div className="item-main">
-                    <div className={`item-name ${item.checked ? "done" : ""}`}>
-                      {item.name}
-                    </div>
-                    <div className="item-meta">{item.category}</div>
-                  </div>
-
-                  <button className="icon-btn" onClick={() => removeItem(item.id)} aria-label="Remove item">
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* LATELY */}
-        <section className="panel lately">
+      {/* TOP GRID (left summary, right grocery list) */}
+      <section className="dash-grid">
+        <div className="panel">
           <div className="panel-head">
-            <h2>Lately</h2>
-            <span className="pill">Recent meals</span>
+            <h2>Overview</h2>
+            <span className="pill">This week</span>
           </div>
 
-          <div className="lately-grid">
-            {recentMeals.map((m) => (
-              <article className="meal-card" key={m.id}>
-                <div className="meal-top">
-                  <span className="meal-day">{m.day}</span>
-                  <span className="meal-chip">Tracked</span>
-                </div>
-                <h3 className="meal-title">{m.title}</h3>
-                <p className="meal-desc">{m.desc}</p>
-
-                <div className="meal-actions">
-                  <button className="ghost-btn" onClick={() => addMealToGrocery(m.id)}>
-                    + Add to grocery list
-                  </button>
-                  <button className="link-btn" onClick={() => navigate("/history")}>
-                    View details →
-                  </button>
-                </div>
-              </article>
+          <div className="stats-grid">
+            {stats.map((s) => (
+              <div className="stat" key={s.label}>
+                <div className="stat-value">{s.value}</div>
+                <div className="stat-label">{s.label}</div>
+              </div>
             ))}
           </div>
-        </section>
-      </main>
-    </div>
+
+          <div className="panel-note">
+            Tip: After scanning meals/ingredients, save results to history so you can see trends here.
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-head">
+            <h2>Grocery list</h2>
+            <span className="pill">{groceryItems.filter((x) => !x.checked).length} left</span>
+          </div>
+
+          <div className="add-row">
+            <input
+              className="text-input"
+              value={newItem}
+              onChange={(e) => setNewItem(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="Add an item (e.g., oats)"
+              aria-label="Add grocery item"
+            />
+            <button className="primary-btn" onClick={addItem}>
+              Add
+            </button>
+          </div>
+
+          <div className="list">
+            {groceryItems.map((item) => (
+              <div className="list-row" key={item.id}>
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={item.checked}
+                    onChange={() => toggleItem(item.id)}
+                  />
+                  <span className="check-ui" />
+                </label>
+
+                <div className="item-main">
+                  <div className={`item-name ${item.checked ? "done" : ""}`}>
+                    {item.name}
+                  </div>
+                  <div className="item-meta">{item.category}</div>
+                </div>
+
+                <button className="icon-btn" onClick={() => removeItem(item.id)} aria-label="Remove item">
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* LATELY */}
+      <section className="panel lately">
+        <div className="panel-head">
+          <h2>Lately</h2>
+          <span className="pill">Recent meals</span>
+        </div>
+
+        <div className="lately-grid">
+          {recentMeals.map((m) => (
+            <article className="meal-card" key={m.id}>
+              <div className="meal-top">
+                <span className="meal-day">{m.day}</span>
+                <span className="meal-chip">Tracked</span>
+              </div>
+              <h3 className="meal-title">{m.title}</h3>
+              <p className="meal-desc">{m.desc}</p>
+
+              <div className="meal-actions">
+                <button className="ghost-btn" onClick={() => addMealToGrocery(m.id)}>
+                  + Add to grocery list
+                </button>
+                <button className="link-btn" onClick={() => navigate("/history")}>
+                  View details →
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </AppLayout>
   );
 }

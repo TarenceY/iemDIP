@@ -2,26 +2,28 @@
 require("dotenv").config();
 console.log("Starting server...");
 
+const recipeRoutes = require("./routes/recipes");
 const express = require("express");
-const https = require("https");
+const cors = require("cors");
 const app = express();
+
+// Allow requests from the React frontend
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
 // Load MongoDB connection
 const db = require("./database");
 const User = require("./models/User");
 const PhotoRequest = require("./models/PhotoRequest");
-
-// Allow the React webapp (localhost:3000) to call this API
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
+const NutritionLog = require("./models/NutritionLog");
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.raw({ type: "application/octet-stream", limit: "10mb" }));
+app.use("/api/recipes", recipeRoutes);
 
 const usersRoutes = require("./routes/users");
 app.use("/users", usersRoutes);
@@ -126,6 +128,48 @@ function transformAIResponse(aiData) {
 }
 
 /**
+ * Save nutrition analysis data into NutritionLog documents.
+ * @param {string} userId
+ * @param {object} aiData
+ */
+async function saveNutritionLogs(userId, aiData) {
+  if (!userId || !aiData || !aiData.nutrition) return;
+
+  const nutrition = aiData.nutrition;
+  const backendData = nutrition.backend_data || {};
+  const backendItems = Array.isArray(backendData.items) ? backendData.items : [];
+  const totals = nutrition.totals || {};
+
+  const logsToInsert = backendItems.length > 0
+    ? backendItems.map((item) => ({
+        user_id: String(userId),
+        log_date: new Date(),
+        food_name: item.food_name || "Detected meal",
+        calories: Number(item.calories || 0),
+        carbs: Number(item.carbs || 0),
+        protein: Number(item.protein || 0),
+        fats: Number(item.fats || 0),
+        fiber: Number(item.fiber || 0),
+        sodium: Number(item.sodium || 0),
+        notes: item.notes || nutrition.analysis_notes || "",
+      }))
+    : [{
+        user_id: String(userId),
+        log_date: new Date(),
+        food_name: "Detected meal",
+        calories: Number(totals.calories || 0),
+        carbs: Number(totals.carbohydrates_g || 0),
+        protein: Number(totals.protein_g || 0),
+        fats: Number(totals.fat_g || 0),
+        fiber: 0,
+        sodium: 0,
+        notes: nutrition.analysis_notes || "",
+      }];
+
+  await NutritionLog.insertMany(logsToInsert);
+}
+
+/**
  * Fetch the image bytes for a Telegram photo request.
  * @param {string} requestId  UUID of the photo request
  * @returns {Promise<{buffer: Buffer, mimeType: string}>}
@@ -182,8 +226,9 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
 
   // Call the AI service
   let result;
+  let aiData;
   try {
-    const aiData = await callAIService(imageBuffer, mimeType);
+    aiData = await callAIService(imageBuffer, mimeType);
     if (!aiData.success) {
       return res.status(502).json({
         message: aiData.error || "AI analysis returned no results. Please try again with a clearer image.",
@@ -196,6 +241,15 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
       message: "AI analysis service is unavailable. Please ensure the AI server is running.",
       detail: err.message,
     });
+  }
+
+  // Persist logs for users when userId is provided by webapp or bot flow.
+  if (req.body && req.body.userId) {
+    try {
+      await saveNutritionLogs(req.body.userId, aiData);
+    } catch (err) {
+      console.error("Failed to save nutrition logs:", err.message);
+    }
   }
 
   // Determine chat ID to notify via Telegram

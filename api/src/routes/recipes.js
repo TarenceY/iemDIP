@@ -1,4 +1,5 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const router = express.Router();
 
 const {
@@ -7,8 +8,14 @@ const {
   getRecipeById
 } = require("../controllers/recipesController");
 
-router.post("/", createRecipe);
-router.get("/", getRecipes);
-router.get("/:id", getRecipeById);
+const recipesLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60,
+  message: { message: "Too many recipe requests. Please try again shortly." },
+});
+
+router.post("/", recipesLimiter, createRecipe);
+router.get("/", recipesLimiter, getRecipes);
+router.get("/:id", recipesLimiter, getRecipeById);
 
 module.exports = router;

@@ -27,3 +27,7 @@ web/node_modules/
 __pycache__/
 *.py[cod]
 *.pyo
+
+# Environment files with secrets
+ai/.env
+ai/src/.env

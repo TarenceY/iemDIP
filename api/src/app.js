@@ -11,6 +11,8 @@ const app = express();
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 // Load MongoDB connection
@@ -18,15 +20,6 @@ const db = require("./database");
 const User = require("./models/User");
 const PhotoRequest = require("./models/PhotoRequest");
 const NutritionLog = require("./models/NutritionLog");
-
-// Allow the React webapp (localhost:3000) to call this API
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.raw({ type: "application/octet-stream", limit: "10mb" }));

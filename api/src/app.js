@@ -2,6 +2,7 @@
 require("dotenv").config();
 console.log("Starting server...");
 
+const recipeRoutes = require("./routes/recipes");
 const express = require("express");
 const https = require("https");
 const app = express();
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.raw({ type: "application/octet-stream", limit: "10mb" }));
+app.use("/api/recipes", recipeRoutes);
 
 const usersRoutes = require("./routes/users");
 app.use("/users", usersRoutes);

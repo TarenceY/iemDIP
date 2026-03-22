@@ -77,44 +77,59 @@ export default function ScanIngredients() {
   function savePlannedMeal(recipe) {
     if (!result) return showToast("Analyze ingredients first.");
     showToast(`Saved "${recipe.title}" to history ✅`);
-    // Later: POST planned meal to backend
   }
 
   function addMissingToGrocery(recipe) {
     if (!result) return showToast("Analyze ingredients first.");
     const count = recipe.missing.length;
     showToast(count ? `Added ${count} missing item(s) ✅` : "Nothing missing 🎉");
-    // Later: Add to grocery list state / backend
   }
 
   return (
     <div className="scaning-container">
-      {/* NAVBAR */}
       <header className="scaning-header">
-        <div className="scaning-brand" role="button" tabIndex={0} onClick={() => navigate("/home")}>
+        <div
+          className="scaning-brand"
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/home")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/home");
+          }}
+        >
           <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
         </div>
 
         <nav className="scaning-nav">
-          <button className="nav-btn" onClick={() => navigate("/home")}>Home</button>
-          <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
-          <button className="nav-btn" onClick={() => navigate("/history")}>History</button>
-          <button className="nav-btn" onClick={() => navigate("/profile")}>Profile</button>
+          <button className="nav-btn" onClick={() => navigate("/home")}>
+            Home
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
+            Dashboard
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/history")}>
+            History
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/profile")}>
+            Profile
+          </button>
         </nav>
 
-        <button className="nav-btn" onClick={() => navigate("/login")}>Log out</button>
+        <button className="logout-btn" onClick={() => navigate("/login")}>
+          Log out
+        </button>
       </header>
 
       <main className="scaning-content">
-        {/* HERO */}
         <section className="scaning-hero">
-          <div>
+          <div className="scaning-hero-copy">
+            <p className="hero-kicker">FRIDGE SCAN</p>
             <h1>Scan Ingredients</h1>
             <p className="subtitle">
               Upload a fridge photo to detect ingredients and get meal ideas.
             </p>
           </div>
+
           <div className="hero-actions">
             <button className="ghost-btn" onClick={() => navigate("/dashboard")}>
               Go to dashboard →
@@ -123,7 +138,6 @@ export default function ScanIngredients() {
         </section>
 
         <section className="scaning-grid">
-          {/* UPLOAD PANEL */}
           <div className="panel">
             <div className="panel-head">
               <h2>Upload</h2>
@@ -162,7 +176,6 @@ export default function ScanIngredients() {
             </div>
           </div>
 
-          {/* RESULTS PANEL */}
           <div className="panel">
             <div className="panel-head">
               <h2>Suggestions</h2>
@@ -179,13 +192,13 @@ export default function ScanIngredients() {
                 <div className="section-label">Detected ingredients</div>
                 <div className="chips">
                   {result.detected.map((d) => (
-                    <span className="chip" key={d}>{d}</span>
+                    <span className="chip" key={d}>
+                      {d}
+                    </span>
                   ))}
                 </div>
 
-                <div className="section-label" style={{ marginTop: 12 }}>
-                  Meal ideas
-                </div>
+                <div className="section-label recipe-section-label">Meal ideas</div>
 
                 <div className="recipe-list">
                   {result.recipes.map((r) => (
@@ -204,7 +217,11 @@ export default function ScanIngredients() {
                           {r.missing.length === 0 ? (
                             <span className="chip">Nothing 🎉</span>
                           ) : (
-                            r.missing.map((m) => <span className="chip" key={m}>{m}</span>)
+                            r.missing.map((m) => (
+                              <span className="chip" key={m}>
+                                {m}
+                              </span>
+                            ))
                           )}
                         </div>
                       </div>

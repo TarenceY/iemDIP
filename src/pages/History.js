@@ -76,7 +76,39 @@ export default function History() {
   }
 
   return (
-    <AppLayout activePage="history">
+    <div className="history-container">
+      {/* TOP NAVBAR (same layout as Dashboard/Home) */}
+      <header className="history-header">
+        <div
+          className="history-brand"
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/home")}
+        >
+          <img src={seefoodLogo} alt="SeeFood logo" />
+        </div>
+
+        <nav className="profile-nav">
+          <button className="nav-btn" onClick={() => navigate("/home")}>
+            Home
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
+            Dashboard
+          </button>
+          <button className="nav-btn active" onClick={() => navigate("/history")}>
+            History
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/profile")}>
+            Profile
+          </button>
+        </nav>
+
+        <button className="nav-btn" onClick={() => navigate("/login")}>
+          Log out
+        </button>
+      </header>
+
+      <main className="history-content">
         <section className="history-hero">
           <h1>Meal History</h1>
           <p className="history-subtitle">

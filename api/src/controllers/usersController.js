@@ -74,7 +74,14 @@ exports.updateProfile = async (req, res) => {
     const { age, gender, restrictions, dislikes, goals, telegramChatId, telegramUsername } = req.body;
     const userId = req.params.id;
 
-    const updates = { age, gender, restrictions, dislikes, goals };
+    // Only include fields that were explicitly provided to avoid overwriting
+    // existing profile data with undefined/null when only telegram fields are sent.
+    const updates = {};
+    if (age !== undefined) updates.age = age;
+    if (gender !== undefined) updates.gender = gender;
+    if (restrictions !== undefined) updates.restrictions = restrictions;
+    if (dislikes !== undefined) updates.dislikes = dislikes;
+    if (goals !== undefined) updates.goals = goals;
     if (telegramChatId !== undefined) updates.telegramChatId = telegramChatId;
     if (telegramUsername !== undefined) updates.telegramUsername = telegramUsername;
 

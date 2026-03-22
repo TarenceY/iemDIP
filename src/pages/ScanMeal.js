@@ -210,7 +210,6 @@ export default function ScanMeal() {
       <header className="scanmeal-header">
         <div className="scanmeal-brand" role="button" tabIndex={0} onClick={() => navigate("/home")}>
           <img src={seefoodLogo} alt="SeeFood logo" />
-          <span>SeeFood</span>
         </div>
 
         <nav className="scanmeal-nav">

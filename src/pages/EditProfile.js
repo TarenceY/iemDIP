@@ -127,7 +127,28 @@ export default function EditProfile() {
   }
 
   return (
-    <AppLayout activePage="profile">
+    <div className="editprofile-container">
+      <header className="profile-header">
+        <div
+          className="profile-brand"
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/home")}
+        >
+          <img src={seefoodLogo} alt="SeeFood logo" />
+        </div>
+
+        <nav className="profile-nav">
+          <button className="nav-btn" onClick={() => navigate("/home")}>Home</button>
+          <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
+          <button className="nav-btn" onClick={() => navigate("/history")}>History</button>
+          <button className="nav-btn active" onClick={() => navigate("/profile")}>Profile</button>
+        </nav>
+
+        <button className="nav-btn" onClick={() => navigate("/login")}>Log out</button>
+      </header>
+
+      <main className="editprofile-content">
         <section className="editprofile-hero">
           <div>
             <h1>Edit Profile</h1>

@@ -37,7 +37,40 @@ export default function Profile() {
   }, [userId]);
 
   return (
-    <AppLayout activePage="profile">
+    <div className="profile-container">
+      {/* TOP NAVBAR */}
+      <header className="profile-header">
+        <div
+          className="profile-brand"
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/home")}
+        >
+          <img src={seefoodLogo} alt="SeeFood logo" />
+        </div>
+
+        <nav className="profile-nav">
+          <button className="nav-btn" onClick={() => navigate("/home")}>
+            Home
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
+            Dashboard
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/history")}>
+            History
+          </button>
+          <button className="nav-btn active" onClick={() => navigate("/profile")}>
+            Profile
+          </button>
+        </nav>
+
+        <button className="nav-btn" onClick={() => navigate("/login")}>
+          Log out
+        </button>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <main className="profile-content">
         {/* HERO */}
         <section className="profile-hero">
           <div className="hero-left">

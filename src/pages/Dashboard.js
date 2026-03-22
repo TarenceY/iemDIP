@@ -103,13 +103,41 @@ export default function Dashboard() {
   }
 
   return (
-    <AppLayout activePage="dashboard">
-      <section className="dash-hero">
-        <h1>My Health Dashboard</h1>
-        <p className="dash-subtitle">
-          Track meals, manage groceries, and view recent activity — all in one place.
-        </p>
-      </section>
+    <div className="dash-container">
+      {/* TOP NAV */}
+      <header className="dash-header">
+        <div className="dash-brand" role="button" tabIndex={0} onClick={() => navigate("/home")}>
+          <img src={seefoodLogo} alt="SeeFood logo" />
+        </div>
+
+        <nav className="profile-nav">
+          <button className="nav-btn" onClick={() => navigate("/home")}>
+            Home
+          </button>
+          <button className="nav-btn active" onClick={() => navigate("/dashboard")}>
+            Dashboard
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/history")}>
+            History
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/profile")}>
+            Profile
+          </button>
+        </nav>
+
+        <button className="nav-btn" onClick={() => navigate("/login")}>
+          Log out
+        </button>
+      </header>
+
+      {/* PAGE */}
+      <main className="dash-content">
+        <section className="dash-hero">
+          <h1>My Health Dashboard</h1>
+          <p className="dash-subtitle">
+            Track meals, manage groceries, and view recent activity — all in one place.
+          </p>
+        </section>
 
       {/* TOP GRID (left summary, right grocery list) */}
       <section className="dash-grid">

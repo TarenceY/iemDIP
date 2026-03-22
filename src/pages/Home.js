@@ -1,25 +1,84 @@
 // Home.js
-import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import "../styles/Home.css";
-import AppLayout from "../components/AppLayout";
+import seefoodLogo from "../assets/images/seefood-logo.jpg";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
 export default function Home() {
   const navigate = useNavigate();
+  const userId = useMemo(() => localStorage.getItem("seefood_user_id") || "", []);
+  const fallbackUsername = localStorage.getItem("seefood_username") || "";
 
-  //change later when you have auth user info
-  const name = useMemo(() => "there", []);
+  const [username, setUsername] = useState(fallbackUsername);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    fetch(`${API_URL}/users/${userId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const name = data.username || fallbackUsername || "";
+        setUsername(name);
+        if (name) localStorage.setItem("seefood_username", name);
+      })
+      .catch(() => {
+        setUsername(fallbackUsername);
+      });
+  }, [userId, fallbackUsername]);
 
   return (
-    <AppLayout activePage="home">
-      {/* Welcome + Calories Panel */}
-      <section className="home-panel">
-        <div className="panel-head">
-          <div>
-            <h1 className="welcome">Welcome back, {name}</h1>
-            <p className="welcome-sub">Let's keep you on track today.</p>
-          </div>
+    <div className="home-container">
+      {/* TOP NAVBAR */}
+      <header className="home-header">
+        <div
+          className="home-brand"
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/home")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/home");
+          }}
+        >
+          <img src={seefoodLogo} alt="SeeFood logo" />
         </div>
+
+        <nav className="profile-nav">
+          <button className="nav-btn active" onClick={() => navigate("/home")}>
+            Home
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
+            Dashboard
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/history")}>
+            History
+          </button>
+          <button className="nav-btn" onClick={() => navigate("/profile")}>
+            Profile
+          </button>
+        </nav>
+
+        <button className="nav-btn" onClick={() => navigate("/login")}>
+          Log out
+        </button>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <main className="home-content">
+        {/* Welcome + Calories Panel */}
+        <section className="home-panel">
+          <div className="panel-head">
+            <div>
+              <h1 className="welcome">
+                Welcome back{username ? `, ${username}` : ""} !
+              </h1>
+              <p className="welcome-sub">Let’s keep you on track today.</p>
+            </div>
+          </div>
 
         <div className="panel-grid">
           {/* Donut placeholder */}

@@ -1,6 +1,9 @@
+import { useEffect, useMemo, useState } from "react";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/EditProfile.css";
+import { getUserInfo, updateProfile } from "../services/api";
+import AppLayout from "../components/AppLayout";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
@@ -28,8 +31,8 @@ export default function EditProfile() {
     []
   );
 
-  const diets = useMemo(
-    () => ["No preference", "Vegetarian", "Vegan", "Halal", "Keto", "Gluten-free"],
+  const genderOptions = useMemo(
+    () => ["Female", "Male", "Non-binary", "Prefer not to say"],
     []
   );
 
@@ -64,6 +67,30 @@ export default function EditProfile() {
     setProfile((prev) => ({ ...prev, [key]: value }));
   }
 
+  async function save() {
+    setError("");
+    const userId = localStorage.getItem("seefood_user_id");
+    if (!userId) {
+      navigate("/login");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updates = {
+        gender: profile.gender,
+        restrictions: profile.restrictions,
+        dislikes: profile.dislikes,
+        goals: profile.goals,
+      };
+      if (profile.age !== "" && profile.age !== null) updates.age = Number(profile.age);
+      await updateProfile(userId, updates);
+      navigate("/profile");
+    } catch (err) {
+      setError(err.message || "Failed to save profile.");
+    } finally {
+      setSaving(false);
+    }
   async function save() {
     if (!userId) {
       setError("Not logged in.");
@@ -134,12 +161,24 @@ export default function EditProfile() {
             <button className="ghost-btn" onClick={() => navigate("/profile")}>
               Cancel
             </button>
+            <button className="primary-btn" onClick={save} disabled={saving || loading}>
+              {saving ? "Saving…" : "Save changes"}
             <button className="primary-btn" onClick={save} disabled={isSaving || loading}>
               {isSaving ? "Saving…" : "Save changes"}
             </button>
           </div>
         </section>
 
+        {error && <p className="login-error">{error}</p>}
+
+        {!loading && (
+          <section className="editprofile-grid">
+            {/* Basic info */}
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Basic information</h2>
+                <span className="pill">Edit</span>
+              </div>
         {loading && <div className="panel"><div className="panel-head"><h2>Loading…</h2></div></div>}
         {error && <div style={{ color: "red", padding: "12px" }}>{error}</div>}
 
@@ -160,10 +199,34 @@ export default function EditProfile() {
                     type="number"
                     min="1"
                     value={profile.age}
+                    onChange={(e) => updateField("age", e.target.value)}
+                  />
+                </div>
+              <div className="form-grid">
+                <div className="field">
+                  <label>Age</label>
+                  <input
+                    className="text-input"
+                    type="number"
+                    min="1"
+                    value={profile.age}
                     onChange={(e) => updateField("age", e.target.value === "" ? "" : Number(e.target.value))}
                   />
                 </div>
 
+                <div className="field">
+                  <label>Gender</label>
+                  <select
+                    className="select-input"
+                    value={profile.gender}
+                    onChange={(e) => updateField("gender", e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    {genderOptions.map((g) => (
+                      <option key={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="field">
                   <label>Gender</label>
                   <select
@@ -193,6 +256,55 @@ export default function EditProfile() {
                   </select>
                 </div>
 
+                <div className="field">
+                  <label>Goals (comma-separated)</label>
+                  <input
+                    className="text-input"
+                    value={profile.goals.join(", ")}
+                    onChange={(e) =>
+                      updateField(
+                        "goals",
+                        e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
+                      )
+                    }
+                    placeholder="e.g. Lose weight, Gain muscle"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Dietary restrictions (comma-separated)</label>
+                  <input
+                    className="text-input"
+                    value={profile.restrictions.join(", ")}
+                    onChange={(e) =>
+                      updateField(
+                        "restrictions",
+                        e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
+                      )
+                    }
+                    placeholder="e.g. Vegetarian, Halal"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Dislikes (comma-separated)</label>
+                  <input
+                    className="text-input"
+                    value={profile.dislikes.join(", ")}
+                    onChange={(e) =>
+                      updateField(
+                        "dislikes",
+                        e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
+                      )
+                    }
+                    placeholder="e.g. mushrooms, olives"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+    </AppLayout>
                 <div className="field">
                   <label>Dietary preference</label>
                   <select
@@ -239,3 +351,4 @@ export default function EditProfile() {
     </div>
   );
 }
+

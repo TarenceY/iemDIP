@@ -214,8 +214,8 @@ export default function Welcome() {
       </div>
 
       <div className="footer-links">
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/terms">Terms</a>
+        <button className="footer-link-btn" onClick={() => alert("Privacy Policy coming soon.")}>Privacy Policy</button>
+        <button className="footer-link-btn" onClick={() => alert("Terms coming soon.")}>Terms</button>
       </div>
     </footer>
 

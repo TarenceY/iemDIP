@@ -10,7 +10,7 @@ import re
 import base64
 import json
 from typing import Dict, Any, Optional, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from loguru import logger
 
@@ -48,6 +48,11 @@ class NutritionResult:
     total_fat_g: float
     analysis_notes: str
     raw_response: str
+    backend_data: Dict[str, Any] = field(default_factory=dict)
+
+    def to_backend_data(self) -> Dict[str, Any]:
+        """Return a backend-friendly payload for persistence."""
+        return self.backend_data
 
 
 class GeminiNutritionAnalyzer:
@@ -277,7 +282,20 @@ Respond ONLY with valid JSON, no additional text."""
                 total_carbs_g=0,
                 total_fat_g=0,
                 analysis_notes="Failed to parse response",
-                raw_response=response_text
+                raw_response=response_text,
+                backend_data={
+                    "items": [],
+                    "summary": {
+                        "food_name": "Unknown meal",
+                        "calories": 0,
+                        "carbs": 0,
+                        "protein": 0,
+                        "fats": 0,
+                        "fiber": 0,
+                        "sodium": 0,
+                        "notes": "Failed to parse response"
+                    }
+                }
             )
         
         # Parse food items
@@ -301,6 +319,20 @@ Respond ONLY with valid JSON, no additional text."""
         # Get totals
         totals = data.get("total_nutrition", {})
         
+        backend_items = [
+            {
+                "food_name": item.food_name,
+                "calories": item.calories,
+                "carbs": item.carbohydrates_g,
+                "protein": item.protein_g,
+                "fats": item.fat_g,
+                "fiber": item.fiber_g,
+                "sodium": item.sodium_mg,
+                "notes": item.notes
+            }
+            for item in food_items
+        ]
+
         return NutritionResult(
             food_items=food_items,
             total_calories=float(totals.get("calories", sum(f.calories for f in food_items))),
@@ -308,5 +340,18 @@ Respond ONLY with valid JSON, no additional text."""
             total_carbs_g=float(totals.get("carbohydrates_g", sum(f.carbohydrates_g for f in food_items))),
             total_fat_g=float(totals.get("fat_g", sum(f.fat_g for f in food_items))),
             analysis_notes=data.get("analysis_notes", ""),
-            raw_response=response_text
+            raw_response=response_text,
+            backend_data={
+                "items": backend_items,
+                "summary": {
+                    "food_name": ", ".join([item.food_name for item in food_items]) or "Detected meal",
+                    "calories": float(totals.get("calories", sum(f.calories for f in food_items))),
+                    "carbs": float(totals.get("carbohydrates_g", sum(f.carbohydrates_g for f in food_items))),
+                    "protein": float(totals.get("protein_g", sum(f.protein_g for f in food_items))),
+                    "fats": float(totals.get("fat_g", sum(f.fat_g for f in food_items))),
+                    "fiber": float(sum(f.fiber_g for f in food_items)),
+                    "sodium": float(sum(f.sodium_mg for f in food_items)),
+                    "notes": data.get("analysis_notes", "")
+                }
+            }
         )

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import "../styles/Home.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -80,60 +80,59 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="panel-grid">
-            {/* Donut placeholder */}
-            <div className="calorie-ring" aria-label="Calories remaining">
-              <div className="ring-center">
-                <div className="ring-kcal">1240</div>
-                <div className="ring-sub">kcal left</div>
-              </div>
-            </div>
-
-            {/* Macro bars placeholder */}
-            <div className="macro-list">
-              <MacroRow label="Carbs" value="120g" pct={37} />
-              <MacroRow label="Protein" value="70g" pct={93} />
-              <MacroRow label="Fats" value="20g" pct={45} />
+        <div className="panel-grid">
+          {/* Donut placeholder */}
+          <div className="calorie-ring" aria-label="Calories remaining">
+            <div className="ring-center">
+              <div className="ring-kcal">1240</div>
+              <div className="ring-sub">kcal left</div>
             </div>
           </div>
-        </section>
 
-        {/* Actions */}
-        <section className="home-section">
-          <h2 className="section-title">What do you want to do today?</h2>
-
-          <div className="action-grid">
-            <button
-              className="action-card"
-              onClick={() => navigate("/scan-meal")}
-            >
-              <div className="action-top">
-                <span className="action-kicker">Track</span>
-                <span className="action-title">Upload your meal</span>
-              </div>
-              <p className="action-desc">
-                Estimate calories & macros from a photo.
-              </p>
-              <span className="ghost-btn action-cta">Scan meal →</span>
-            </button>
-
-            <button
-              className="action-card"
-              onClick={() => navigate("/scan-ingredients")}
-            >
-              <div className="action-top">
-                <span className="action-kicker">Plan</span>
-                <span className="action-title">Upload your fridge</span>
-              </div>
-              <p className="action-desc">
-                Get recipe ideas using what you already have.
-              </p>
-              <span className="ghost-btn action-cta">Scan ingredients →</span>
-            </button>
+          {/* Macro bars placeholder */}
+          <div className="macro-list">
+            <MacroRow label="Carbs" value="120g" pct={37} />
+            <MacroRow label="Protein" value="70g" pct={93} />
+            <MacroRow label="Fats" value="20g" pct={45} />
           </div>
-        </section>
-      </main>
-    </div>
+        </div>
+      </section>
+
+      {/* Actions */}
+      <section className="home-section">
+        <h2 className="section-title">What do you want to do today?</h2>
+
+        <div className="action-grid">
+          <button
+            className="action-card"
+            onClick={() => navigate("/scan-meal")}
+          >
+            <div className="action-top">
+              <span className="action-kicker">Track</span>
+              <span className="action-title">Upload your meal</span>
+            </div>
+            <p className="action-desc">
+              Estimate calories &amp; macros from a photo.
+            </p>
+            <span className="ghost-btn action-cta">Scan meal →</span>
+          </button>
+
+          <button
+            className="action-card"
+            onClick={() => navigate("/scan-ingredients")}
+          >
+            <div className="action-top">
+              <span className="action-kicker">Plan</span>
+              <span className="action-title">Upload your fridge</span>
+            </div>
+            <p className="action-desc">
+              Get recipe ideas using what you already have.
+            </p>
+            <span className="ghost-btn action-cta">Scan ingredients →</span>
+          </button>
+        </div>
+      </section>
+    </AppLayout>
   );
 }
 

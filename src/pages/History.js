@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/History.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg";
+import AppLayout from "../components/AppLayout";
 
 export default function History() {
   const navigate = useNavigate();
@@ -207,7 +207,6 @@ export default function History() {
 
         {/* TOAST */}
         {toast && <div className="toast">{toast}</div>}
-      </main>
-    </div>
+    </AppLayout>
   );
 }

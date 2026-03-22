@@ -18,7 +18,6 @@ export default function ScanIngredients() {
   );
   const [telegramMode, setTelegramMode] = useState(false);
   const [hasTelegramPhoto, setHasTelegramPhoto] = useState(false);
-  const [requestId, setRequestId] = useState(null);
   const [telegramStatus, setTelegramStatus] = useState("idle"); // idle | requesting | waiting | completed | error
   const pollRef = useRef(null);
 
@@ -86,7 +85,6 @@ export default function ScanIngredients() {
     setTelegramMode(false);
     setHasTelegramPhoto(false);
     setTelegramStatus("idle");
-    setRequestId(null);
 
     if (pollRef.current) {
       clearInterval(pollRef.current);
@@ -128,7 +126,6 @@ export default function ScanIngredients() {
       }
 
       const data = await resp.json();
-      setRequestId(data.requestId);
       setTelegramStatus("waiting");
       showToast("📱 Check Telegram – send a fridge photo!");
 

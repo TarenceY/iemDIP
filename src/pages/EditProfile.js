@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/EditProfile.css";
-import { getUserInfo, updateProfile } from "../services/api";
 import AppLayout from "../components/AppLayout";
-import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -31,8 +28,8 @@ export default function EditProfile() {
     []
   );
 
-  const genderOptions = useMemo(
-    () => ["Female", "Male", "Non-binary", "Prefer not to say"],
+  const diets = useMemo(
+    () => ["No preference", "Vegetarian", "Vegan", "Halal", "Keto", "Gluten-free"],
     []
   );
 
@@ -67,30 +64,6 @@ export default function EditProfile() {
     setProfile((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function save() {
-    setError("");
-    const userId = localStorage.getItem("seefood_user_id");
-    if (!userId) {
-      navigate("/login");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const updates = {
-        gender: profile.gender,
-        restrictions: profile.restrictions,
-        dislikes: profile.dislikes,
-        goals: profile.goals,
-      };
-      if (profile.age !== "" && profile.age !== null) updates.age = Number(profile.age);
-      await updateProfile(userId, updates);
-      navigate("/profile");
-    } catch (err) {
-      setError(err.message || "Failed to save profile.");
-    } finally {
-      setSaving(false);
-    }
   async function save() {
     if (!userId) {
       setError("Not logged in.");
@@ -127,228 +100,120 @@ export default function EditProfile() {
   }
 
   return (
-    <div className="editprofile-container">
-      <header className="profile-header">
-        <div
-          className="profile-brand"
-          role="button"
-          tabIndex={0}
-          onClick={() => navigate("/home")}
-        >
-          <img src={seefoodLogo} alt="SeeFood logo" />
+    <AppLayout activePage="profile">
+      <section className="editprofile-hero">
+        <div>
+          <h1>Edit Profile</h1>
+          <p className="editprofile-subtitle">
+            Update your preferences and nutrition targets.
+          </p>
         </div>
 
-        <nav className="profile-nav">
-          <button className="nav-btn" onClick={() => navigate("/home")}>Home</button>
-          <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
-          <button className="nav-btn" onClick={() => navigate("/history")}>History</button>
-          <button className="nav-btn active" onClick={() => navigate("/profile")}>Profile</button>
-        </nav>
+        <div className="editprofile-actions">
+          <button className="ghost-btn" onClick={() => navigate("/profile")}>
+            Cancel
+          </button>
+          <button className="primary-btn" onClick={save} disabled={isSaving || loading}>
+            {isSaving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </section>
 
-        <button className="nav-btn" onClick={() => navigate("/login")}>Log out</button>
-      </header>
+      {loading && <div className="panel"><div className="panel-head"><h2>Loading…</h2></div></div>}
+      {error && <div style={{ color: "red", padding: "12px" }}>{error}</div>}
 
-      <main className="editprofile-content">
-        <section className="editprofile-hero">
-          <div>
-            <h1>Edit Profile</h1>
-            <p className="editprofile-subtitle">
-              Update your preferences and nutrition targets.
-            </p>
-          </div>
-
-          <div className="editprofile-actions">
-            <button className="ghost-btn" onClick={() => navigate("/profile")}>
-              Cancel
-            </button>
-            <button className="primary-btn" onClick={save} disabled={saving || loading}>
-              {saving ? "Saving…" : "Save changes"}
-            <button className="primary-btn" onClick={save} disabled={isSaving || loading}>
-              {isSaving ? "Saving…" : "Save changes"}
-            </button>
-          </div>
-        </section>
-
-        {error && <p className="login-error">{error}</p>}
-
-        {!loading && (
-          <section className="editprofile-grid">
-            {/* Basic info */}
-            <div className="panel">
-              <div className="panel-head">
-                <h2>Basic information</h2>
-                <span className="pill">Edit</span>
-              </div>
-        {loading && <div className="panel"><div className="panel-head"><h2>Loading…</h2></div></div>}
-        {error && <div style={{ color: "red", padding: "12px" }}>{error}</div>}
-
-        {!loading && (
-          <section className="editprofile-grid">
-            {/* Basic info */}
-            <div className="panel">
-              <div className="panel-head">
-                <h2>Basic information</h2>
-                <span className="pill">Edit</span>
-              </div>
-
-              <div className="form-grid">
-                <div className="field">
-                  <label>Age</label>
-                  <input
-                    className="text-input"
-                    type="number"
-                    min="1"
-                    value={profile.age}
-                    onChange={(e) => updateField("age", e.target.value)}
-                  />
-                </div>
-              <div className="form-grid">
-                <div className="field">
-                  <label>Age</label>
-                  <input
-                    className="text-input"
-                    type="number"
-                    min="1"
-                    value={profile.age}
-                    onChange={(e) => updateField("age", e.target.value === "" ? "" : Number(e.target.value))}
-                  />
-                </div>
-
-                <div className="field">
-                  <label>Gender</label>
-                  <select
-                    className="select-input"
-                    value={profile.gender}
-                    onChange={(e) => updateField("gender", e.target.value)}
-                  >
-                    <option value="">Select</option>
-                    {genderOptions.map((g) => (
-                      <option key={g}>{g}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Gender</label>
-                  <select
-                    className="select-input"
-                    value={profile.gender}
-                    onChange={(e) => updateField("gender", e.target.value)}
-                  >
-                    <option value="">Select</option>
-                    <option>Female</option>
-                    <option>Male</option>
-                    <option>Non-binary</option>
-                    <option>Prefer not to say</option>
-                  </select>
-                </div>
-
-                <div className="field">
-                  <label>Goal</label>
-                  <select
-                    className="select-input"
-                    value={profile.goals[0] || ""}
-                    onChange={(e) => updateField("goals", e.target.value ? [e.target.value] : [])}
-                  >
-                    <option value="">Select</option>
-                    {goals.map((g) => (
-                      <option key={g}>{g}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="field">
-                  <label>Goals (comma-separated)</label>
-                  <input
-                    className="text-input"
-                    value={profile.goals.join(", ")}
-                    onChange={(e) =>
-                      updateField(
-                        "goals",
-                        e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                      )
-                    }
-                    placeholder="e.g. Lose weight, Gain muscle"
-                  />
-                </div>
-
-                <div className="field">
-                  <label>Dietary restrictions (comma-separated)</label>
-                  <input
-                    className="text-input"
-                    value={profile.restrictions.join(", ")}
-                    onChange={(e) =>
-                      updateField(
-                        "restrictions",
-                        e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                      )
-                    }
-                    placeholder="e.g. Vegetarian, Halal"
-                  />
-                </div>
-
-                <div className="field">
-                  <label>Dislikes (comma-separated)</label>
-                  <input
-                    className="text-input"
-                    value={profile.dislikes.join(", ")}
-                    onChange={(e) =>
-                      updateField(
-                        "dislikes",
-                        e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                      )
-                    }
-                    placeholder="e.g. mushrooms, olives"
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-    </AppLayout>
-                <div className="field">
-                  <label>Dietary preference</label>
-                  <select
-                    className="select-input"
-                    value={profile.restrictions[0] || ""}
-                    onChange={(e) =>
-                      updateField("restrictions", e.target.value ? [e.target.value] : [])
-                    }
-                  >
-                    <option value="">No preference</option>
-                    {diets.map((d) => (
-                      <option key={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+      {!loading && (
+        <section className="editprofile-grid">
+          {/* Basic info */}
+          <div className="panel">
+            <div className="panel-head">
+              <h2>Basic information</h2>
+              <span className="pill">Edit</span>
             </div>
 
-            <div className="panel">
-              <div className="panel-head">
-                <h2>Dislikes</h2>
-                <span className="pill">Optional</span>
-              </div>
+            <div className="form-grid">
               <div className="field">
-                <label>Foods you dislike (comma-separated)</label>
+                <label>Age</label>
                 <input
                   className="text-input"
-                  value={profile.dislikes.join(", ")}
-                  onChange={(e) =>
-                    updateField(
-                      "dislikes",
-                      e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                    )
-                  }
-                  placeholder="e.g., broccoli, mushrooms"
+                  type="number"
+                  min="1"
+                  value={profile.age}
+                  onChange={(e) => updateField("age", e.target.value === "" ? "" : Number(e.target.value))}
                 />
               </div>
-            </div>
-          </section>
-        )}
 
-        {toast && <div className="toast">{toast}</div>}
-      </main>
-    </div>
+              <div className="field">
+                <label>Gender</label>
+                <select
+                  className="select-input"
+                  value={profile.gender}
+                  onChange={(e) => updateField("gender", e.target.value)}
+                >
+                  <option value="">Select</option>
+                  <option>Female</option>
+                  <option>Male</option>
+                  <option>Non-binary</option>
+                  <option>Prefer not to say</option>
+                </select>
+              </div>
+
+              <div className="field">
+                <label>Goal</label>
+                <select
+                  className="select-input"
+                  value={profile.goals[0] || ""}
+                  onChange={(e) => updateField("goals", e.target.value ? [e.target.value] : [])}
+                >
+                  <option value="">Select</option>
+                  {goals.map((g) => (
+                    <option key={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <label>Dietary preference</label>
+                <select
+                  className="select-input"
+                  value={profile.restrictions[0] || ""}
+                  onChange={(e) =>
+                    updateField("restrictions", e.target.value ? [e.target.value] : [])
+                  }
+                >
+                  <option value="">No preference</option>
+                  {diets.map((d) => (
+                    <option key={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-head">
+              <h2>Dislikes</h2>
+              <span className="pill">Optional</span>
+            </div>
+            <div className="field">
+              <label>Foods you dislike (comma-separated)</label>
+              <input
+                className="text-input"
+                value={profile.dislikes.join(", ")}
+                onChange={(e) =>
+                  updateField(
+                    "dislikes",
+                    e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
+                  )
+                }
+                placeholder="e.g., broccoli, mushrooms"
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
+    </AppLayout>
   );
 }
-

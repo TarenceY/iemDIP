@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg";
 import bgImage from "../assets/images/bg-food.png";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
-import { loginUser } from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -14,7 +12,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     setError("");
@@ -68,7 +65,6 @@ export default function Login() {
         backgroundPosition: "center",
       }}
     >
-
       <main className="login-shell">
         <section className="login-left">
           <div className="login-left-card">

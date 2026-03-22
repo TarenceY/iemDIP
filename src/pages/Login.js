@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg"; 
+import seefoodLogo from "../assets/images/seefood-logo.jpg";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 import { loginUser } from "../services/api";
 
 export default function Login() {
@@ -9,32 +11,43 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     setError("");
 
-    // basic validation
     if (!email.trim() || !password.trim()) {
       setError("Please enter your email and password.");
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
-      const data = await loginUser(email.trim().toLowerCase(), password);
+      const resp = await fetch(`${API_URL}/users/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        setError(data.message || "Incorrect email or password. Please try again.");
+        return;
+      }
 
       localStorage.setItem("seefood_logged_in", "true");
       localStorage.setItem("seefood_user_email", email.trim().toLowerCase());
       localStorage.setItem("seefood_user_id", data.userId);
-      localStorage.setItem("seefood_username", data.username);
+      if (data.username) localStorage.setItem("seefood_username", data.username);
 
       navigate("/home");
     } catch (err) {
-      setError(err.message || "Incorrect email or password. Please try again.");
+      setError("Could not reach the server. Is the API running?");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -63,7 +76,7 @@ export default function Login() {
           <span>IM3180 • Group IE01</span>
         </div>
       </div>
-      {/* RIGHT SIDE (you can keep your left side as-is) */}
+      {/* RIGHT SIDE */}
       <div className="login-right">
         <div className="login-card">
           <div className="login-header">
@@ -71,7 +84,6 @@ export default function Login() {
             <p>Use your email to continue.</p>
           </div>
 
-          {/* ✅ Error message */}
           {error && <div className="login-error">{error}</div>}
 
           <div className="field">
@@ -96,8 +108,8 @@ export default function Login() {
             />
           </div>
 
-          <button className="login-btn" onClick={handleLogin} disabled={loading}>
-            {loading ? "Logging in…" : "Login"}
+          <button className="login-btn" onClick={handleLogin} disabled={isLoading} disabled={loading}>
+            {isLoading ? "Logging in…" : "{loading ? "Logging in…" : "Login"}"}
           </button>
 
           <p className="signup-text">

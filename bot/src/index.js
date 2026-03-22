@@ -6,7 +6,7 @@ import { loginUser, linkTelegramChatId } from "./services/authService.js";
 
 dotenv.config(); // reads .env at repo root or bot/.env
 const token = process.env.TELEGRAM_TOKEN;
-const API_URL = process.env.API_URL || "http://localhost:4000";
+const API_URL = process.env.API_URL || "http://localhost:3000";
 
 if (!token) {
   console.error("Missing TELEGRAM_TOKEN in .env");

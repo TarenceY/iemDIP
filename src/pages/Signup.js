@@ -1,46 +1,38 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Signup.css";
-import seefoodLogo from "../assets/images/seefood-logo.jpg"; 
-import { registerUser } from "../services/api";
+import seefoodLogo from "../assets/images/seefood-logo.jpg";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 export default function Signup() {
   const navigate = useNavigate();
 
-  // Form state
   const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
-  const [height, setHeight] = useState("");
-  const [weight, setWeight] = useState("");
   const [workout, setWorkout] = useState("");
   const [activity, setActivity] = useState("");
   const [agreed, setAgreed] = useState(false);
 
-  // UI state
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const handleSubmit = async () => {
     setError("");
 
-    // Required fields check
     if (
       !email.trim() ||
-      !firstName.trim() ||
-      !lastName.trim() ||
+      !username.trim() ||
       !password ||
       !confirmPassword ||
       !gender ||
       !age ||
-      !height ||
-      !weight ||
       !workout ||
       !activity
     ) {
@@ -48,37 +40,45 @@ export default function Signup() {
       return;
     }
 
-    // Password match
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
-    // Terms
     if (!agreed) {
       setError("You must agree to the Terms and Conditions.");
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
-      await registerUser({
-        username: [firstName, lastName].filter(Boolean).join(" ").trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        age: Number(age),
-        gender,
-        restrictions: [],
-        dislikes: [],
-        goals: [activity, workout].filter(Boolean),
+      const resp = await fetch(`${API_URL}/users/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          username: username.trim(),
+          password,
+          age: Number(age),
+          gender,
+          goals: [activity],
+          restrictions: [],
+          dislikes: [],
+        }),
       });
 
-      // Registration successful → go to login
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        setError(data.message || "Registration failed. Please try again.");
+        return;
+      }
+
       navigate("/login");
     } catch (err) {
-      setError(err.message || "Registration failed. Please try again.");
+      setError("Could not reach the server. Is the API running?");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -126,29 +126,16 @@ export default function Signup() {
             />
           </div>
 
-          {/* NAME */}
-          <div className="grid-2">
-            <div className="field">
-              <label>First Name</label>
-              <input
-                type="text"
-                placeholder="First Name"
-                className="signup-input"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-            </div>
-
-            <div className="field">
-              <label>Last Name</label>
-              <input
-                type="text"
-                placeholder="Last Name"
-                className="signup-input"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
+          {/* USERNAME */}
+          <div className="field">
+            <label>Username</label>
+            <input
+              type="text"
+              placeholder="Choose a username"
+              className="signup-input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </div>
 
           {/* PASSWORDS */}
@@ -227,40 +214,16 @@ export default function Signup() {
             </div>
           </div>
 
-          {/* AGE / HEIGHT / WEIGHT */}
-          <div className="grid-3">
-            <div className="field">
-              <label>Age</label>
-              <input
-                type="number"
-                placeholder="Age"
-                className="signup-input"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-              />
-            </div>
-
-            <div className="field">
-              <label>Height (cm)</label>
-              <input
-                type="number"
-                placeholder="e.g. 165"
-                className="signup-input"
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-              />
-            </div>
-
-            <div className="field">
-              <label>Weight (kg)</label>
-              <input
-                type="number"
-                placeholder="e.g. 60"
-                className="signup-input"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-              />
-            </div>
+          {/* AGE */}
+          <div className="field">
+            <label>Age</label>
+            <input
+              type="number"
+              placeholder="Age"
+              className="signup-input"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+            />
           </div>
 
           {/* ACTIVITY LEVEL */}
@@ -338,8 +301,8 @@ export default function Signup() {
           </label>
 
           {/* SUBMIT */}
-          <button className="primary-btn" onClick={handleSubmit} disabled={loading}>
-            {loading ? "Creating account…" : "Continue"}
+          <button className="primary-btn" onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? "Creating account…" : "Continue"}
           </button>
 
           {/* ERROR */}

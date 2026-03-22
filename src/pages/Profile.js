@@ -1,37 +1,40 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Profile.css";
-import { getUserInfo } from "../services/api";
-import AppLayout from "../components/AppLayout";
+import seefoodLogo from "../assets/images/seefood-logo.jpg";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 export default function Profile() {
   const navigate = useNavigate();
+
+  const userId = useMemo(() => localStorage.getItem("seefood_user_id") || "", []);
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const userId = localStorage.getItem("seefood_user_id");
     if (!userId) {
-      navigate("/login");
+      setLoading(false);
+      setError("Not logged in. Please log in first.");
       return;
     }
 
-    getUserInfo(userId)
-      .then((data) => {
-        setProfile({
-          name: data.username || "",
-          age: data.age || "—",
-          gender: data.gender || "—",
-          goals: data.goals || [],
-          restrictions: data.restrictions || [],
-          dislikes: data.dislikes || [],
-        });
+    fetch(`${API_URL}/users/${userId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        return res.json();
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [navigate]);
+      .then((data) => {
+        setProfile(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to load profile.");
+        setLoading(false);
+      });
+  }, [userId]);
 
   return (
     <AppLayout activePage="profile">
@@ -51,8 +54,8 @@ export default function Profile() {
           </div>
         </section>
 
-        {loading && <p>Loading profile…</p>}
-        {error && <p className="login-error">{error}</p>}
+        {loading && <div className="empty"><div className="empty-title">Loading profile…</div></div>}
+        {error && <div className="empty"><div className="empty-title" style={{ color: "red" }}>{error}</div></div>}
 
         {profile && (
           <section className="profile-grid">
@@ -63,86 +66,96 @@ export default function Profile() {
                 <span className="pill">Summary</span>
               </div>
 
-              <div className="summary-grid">
-                <div className="summary-item">
-                  <div className="summary-label">Name</div>
-                  <div className="summary-value">{profile.name}</div>
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <div className="summary-label">Username</div>
+                    <div className="summary-value">{profile.username || "—"}</div>
                 </div>
 
                 <div className="summary-item">
-                  <div className="summary-label">Age</div>
-                  <div className="summary-value">{profile.age}</div>
-                </div>
+                  <div className="summary-label">Email</div>
+                  <div className="summary-value">{profile.email || "—"}</div>
+                  </div>
 
-                <div className="summary-item">
-                  <div className="summary-label">Gender</div>
-                  <div className="summary-value">{profile.gender}</div>
-                </div>
+                  <div className="summary-item">
+                    <div className="summary-label">Age</div>
+                    <div className="summary-value">{profile.age ?? "—"}</div>
+                  </div>
+
+                  <div className="summary-item">
+                    <div className="summary-label">Gender</div>
+                    <div className="summary-value">{profile.gender || "—"}</div>
+                  </div>
 
                 <div className="summary-item">
                   <div className="summary-label">Goals</div>
                   <div className="summary-value">
-                    {profile.goals.length > 0 ? profile.goals.join(", ") : "—"}
+                    {profile.goals && profile.goals.length > 0
+                      ? profile.goals.join(", ")
+                      : "—"}
                   </div>
                 </div>
 
                 <div className="summary-item">
                   <div className="summary-label">Dietary restrictions</div>
                   <div className="summary-value">
-                    {profile.restrictions.length > 0 ? profile.restrictions.join(", ") : "None"}
+                    {profile.restrictions && profile.restrictions.length > 0
+                      ? profile.restrictions.join(", ")
+                      : "None"}
                   </div>
                 </div>
 
                 <div className="summary-item">
-                  <div className="summary-label">Dislikes</div>
+                  <div className="summary-label">Telegram</div>
                   <div className="summary-value">
-                    {profile.dislikes.length > 0 ? profile.dislikes.join(", ") : "None"}
+                    {profile.telegramUsername ? `@${profile.telegramUsername}` : "Not linked"}
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* ACCOUNT SECTION */}
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Account</h2>
+                <span className="pill">Security</span>
+              </div>
+
+              <div className="account-row">
+                <div>
+                  <div className="account-title">Change password</div>
+                  <div className="account-desc">
+                    Update your password regularly to keep your account safe.
+                  </div>
+                </div>
+                <button
+                  className="ghost-btn"
+                  onClick={() => alert("Hook this to your password flow!")}
+                >
+                  Change
+                </button>
+              </div>
+
+              <div className="divider" />
+
+              <div className="account-row">
+                <div>
+                  <div className="account-title">Delete account</div>
+                  <div className="account-desc">
+                    This action is permanent. Use carefully.
+                  </div>
+                </div>
+                <button
+                  className="danger-btn"
+                  onClick={() => alert("Hook this to your delete account flow!")}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </section>
         )}
-
-        {/* ACCOUNT */}
-        <section className="panel account">
-          <div className="panel-head">
-            <h2>Account</h2>
-            <span className="pill">Security</span>
-          </div>
-
-          <div className="account-row">
-            <div>
-              <div className="account-title">Change password</div>
-              <div className="account-desc">
-                Update your password regularly to keep your account safe.
-              </div>
-            </div>
-            <button
-              className="ghost-btn"
-              onClick={() => alert("Hook this to your password flow!")}
-            >
-              Change
-            </button>
-          </div>
-
-          <div className="divider" />
-
-          <div className="account-row">
-            <div>
-              <div className="account-title">Delete account</div>
-              <div className="account-desc">
-                This action is permanent. Use carefully.
-              </div>
-            </div>
-            <button
-              className="danger-btn"
-              onClick={() => alert("Hook this to your delete account flow!")}
-            >
-              Delete
-            </button>
-          </div>
-        </section>
-    </AppLayout>
+      </main>
+    </div>
   );
 }

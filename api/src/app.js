@@ -14,6 +14,8 @@ app.use(cors({
 
 // Load MongoDB connection
 const db = require("./database");
+const User = require("./models/User");
+const PhotoRequest = require("./models/PhotoRequest");
 
 // Allow the React webapp (localhost:3000) to call this API
 app.use((req, res, next) => {
@@ -58,37 +60,151 @@ app.get("/health", (req, res) => {
   });
 });
 
-/**
- * POST /analyze
- *
- * Accepts a meal photo and returns mock nutritional analysis.
- * Supports two content types:
- *   - application/json: { image: "<base64>", userId: "<optional>", chatId: "<optional>" }
- *   - application/octet-stream: raw image bytes (sent by the Telegram bot)
- *
- * If a chatId (or the userId's linked telegramChatId) is available and TELEGRAM_TOKEN
- * is set in the environment, the result is also sent to the user via Telegram.
- */
-app.post("/analyze", analyzeLimiter, async (req, res) => {
-  // Mock nutrition result – replace with real model call when available
-  const result = {
-    name: "Detected meal",
-    calories: 520,
-    macros: { protein: 38, carbs: 54, fats: 16 },
-    highlights: ["High protein", "Balanced carbs", "Good fiber"],
-    suggestions: ["Add more greens for micronutrients", "Choose low-sugar sauce"],
-  };
+// ---------------------------------------------------------------------------
+// AI Integration helpers
+// ---------------------------------------------------------------------------
 
-  // Determine chat ID to notify
+/**
+ * Send an image buffer to the Python AI service and return the raw response.
+ * @param {Buffer} imageBuffer  Raw image bytes
+ * @param {string} mimeType     MIME type of the image (e.g. "image/jpeg")
+ * @returns {Promise<object>}   Parsed JSON from the AI service
+ */
+async function callAIService(imageBuffer, mimeType = "image/jpeg") {
+  const aiApiUrl = process.env.AI_API_URL || "http://localhost:8000";
+
+  const formData = new FormData();
+  const blob = new Blob([imageBuffer], { type: mimeType });
+  formData.append("image", blob, "meal.jpg");
+  formData.append("include_annotated", "false");
+
+  const response = await fetch(`${aiApiUrl}/api/analyze`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`AI service error ${response.status}: ${text}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Transform the AI service response into the shape the React frontend expects.
+ * @param {object} aiData  Response body from the Python AI service
+ * @returns {object}       { name, calories, macros, highlights, suggestions }
+ */
+function transformAIResponse(aiData) {
+  const nutrition = aiData.nutrition || {};
+  const totals = nutrition.totals || {};
+  const foodItems = nutrition.food_items || [];
+
+  // Meal name: join detected food item names
+  const foodNames = foodItems.map((item) => item.food_name).filter(Boolean);
+  const name = foodNames.length > 0 ? foodNames.join(", ") : "Detected meal";
+
+  const calories = Math.round(totals.calories || 0);
+  const protein = Math.round(totals.protein_g || 0);
+  const carbs = Math.round(totals.carbohydrates_g || 0);
+  const fats = Math.round(totals.fat_g || 0);
+
+  // Generate highlights from macro values
+  const highlights = [];
+  if (protein >= 25) highlights.push("High protein");
+  else if (protein >= 15) highlights.push("Good protein");
+  if (fats <= 10) highlights.push("Low fat");
+  if (carbs <= 30) highlights.push("Low carb");
+  if (calories <= 400) highlights.push("Low calorie");
+  if (highlights.length === 0) highlights.push("Balanced meal");
+
+  // Parse suggestions from the AI analysis notes
+  const notes = nutrition.analysis_notes || "";
+  const suggestions = notes
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 10)
+    .slice(0, 3);
+  if (suggestions.length === 0) suggestions.push("Enjoy your meal!");
+
+  return { name, calories, macros: { protein, carbs, fats }, highlights, suggestions };
+}
+
+/**
+ * Fetch the image bytes for a Telegram photo request.
+ * @param {string} requestId  UUID of the photo request
+ * @returns {Promise<{buffer: Buffer, mimeType: string}>}
+ */
+async function fetchTelegramPhoto(requestId) {
+  const doc = await PhotoRequest.findOne({ requestId, status: "completed" });
+  if (!doc || !doc.photoUrl) {
+    throw new Error("Photo not found or not yet uploaded.");
+  }
+
+  // Fetch from the photo URL (S3 or local API endpoint)
+  const response = await fetch(doc.photoUrl);
+  if (!response.ok) throw new Error(`Failed to fetch photo: ${response.status}`);
+
+  const arrayBuffer = await response.arrayBuffer();
+  return { buffer: Buffer.from(arrayBuffer), mimeType: "image/jpeg" };
+}
+
+// ---------------------------------------------------------------------------
+// POST /analyze
+//
+// Accepts a meal photo and returns AI nutritional analysis.
+// Supports two content types:
+//   - application/json: { image: "<base64>", userId: "<optional>", chatId: "<optional>" }
+//   - application/json: { requestId: "<uuid>", userId: "<optional>" }  (Telegram upload)
+//   - application/octet-stream: raw image bytes (sent by the Telegram bot)
+//
+// If a chatId (or the userId's linked telegramChatId) is available and TELEGRAM_TOKEN
+// is set in the environment, the result is also sent to the user via Telegram.
+// ---------------------------------------------------------------------------
+app.post("/analyze", analyzeLimiter, async (req, res) => {
+  let imageBuffer;
+  let mimeType = "image/jpeg";
+
+  try {
+    if (Buffer.isBuffer(req.body)) {
+      // Raw bytes sent by the Telegram bot
+      imageBuffer = req.body;
+    } else if (req.body && req.body.requestId) {
+      // Telegram photo upload flow – locate the stored image
+      const { buffer, mimeType: mt } = await fetchTelegramPhoto(req.body.requestId);
+      imageBuffer = buffer;
+      mimeType = mt;
+    } else if (req.body && req.body.image) {
+      // Base64-encoded image from the webapp
+      imageBuffer = Buffer.from(req.body.image, "base64");
+    } else {
+      return res.status(400).json({ message: "No image provided." });
+    }
+  } catch (err) {
+    console.error("Image retrieval error:", err.message);
+    return res.status(400).json({ message: err.message || "Failed to retrieve image." });
+  }
+
+  // Call the AI service
+  let result;
+  try {
+    const aiData = await callAIService(imageBuffer, mimeType);
+    result = transformAIResponse(aiData);
+  } catch (err) {
+    console.error("AI analysis error:", err.message);
+    return res.status(502).json({
+      message: "AI analysis service is unavailable. Please ensure the AI server is running.",
+      detail: err.message,
+    });
+  }
+
+  // Determine chat ID to notify via Telegram
   let chatId = null;
-  if (Buffer.isBuffer(req.body)) {
-    // Request came from the Telegram bot – no webapp chatId needed
-  } else if (req.body && req.body.chatId) {
+  if (req.body && req.body.chatId) {
     chatId = req.body.chatId;
   } else if (req.body && req.body.userId) {
-    // Look up the user's linked Telegram chat ID from the database
     try {
-      const User = require("./models/User");
       const user = await User.findById(req.body.userId).select("telegramChatId");
       if (user && user.telegramChatId) chatId = user.telegramChatId;
     } catch (_) {

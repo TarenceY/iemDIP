@@ -228,3 +228,106 @@ Respond ONLY with valid JSON, no additional text."""
             analysis_notes=data.get("analysis_notes", ""),
             raw_response=response_text
         )
+
+
+class GeminiIngredientAnalyzer:
+    """
+    Ingredient Analyzer using Google Gemini API.
+
+    Analyzes fridge or pantry photos to detect visible ingredients
+    and suggest recipes that can be made with them.
+    """
+
+    INGREDIENT_PROMPT = """You are a kitchen assistant AI with expertise in food recognition.
+Analyze this fridge or pantry photo carefully.
+
+## Your Task:
+1. Identify ALL visible food ingredients in the image.
+2. Suggest exactly 3 practical recipes that can be made primarily with the detected ingredients.
+
+## Response Format (JSON):
+{
+    "detected_ingredients": ["ingredient1", "ingredient2", "ingredient3"],
+    "recipes": [
+        {
+            "title": "Recipe name",
+            "description": "Brief, appetizing description of the dish",
+            "missing_ingredients": ["any ingredient needed but not clearly visible"]
+        },
+        {
+            "title": "Another recipe",
+            "description": "Brief description",
+            "missing_ingredients": []
+        },
+        {
+            "title": "Third recipe",
+            "description": "Brief description",
+            "missing_ingredients": ["item1", "item2"]
+        }
+    ],
+    "analysis_notes": "Any notes about detection confidence or image quality"
+}
+
+Respond ONLY with valid JSON, no additional text."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = os.getenv("GEMINI_MODEL", "gemini-3.0-flash")
+    ):
+        """Initialize the Gemini ingredient analyzer using the new genai.Client."""
+        if not GEMINI_AVAILABLE:
+            raise ImportError("google-genai package not installed")
+
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        if not self.api_key:
+            raise ValueError("Gemini API key required. Set GEMINI_API_KEY environment variable.")
+
+        self.model_name = model
+        self.client = genai.Client(api_key=self.api_key)
+
+        logger.info(f"Gemini ingredient analyzer initialized with model: {model}")
+
+    def analyze_from_bytes(
+        self,
+        image_bytes: bytes,
+        mime_type: str = "image/jpeg"
+    ) -> dict:
+        """Detect ingredients and suggest recipes from image bytes."""
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=[
+                    types.Part.from_text(text=self.INGREDIENT_PROMPT),
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                ]
+            )
+            result = self._parse_response(response.text)
+            logger.info(
+                f"Ingredient analysis complete: {len(result.get('detected_ingredients', []))} ingredients detected"
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Gemini ingredient analysis failed: {e}")
+            raise
+
+    def _parse_response(self, response_text: str) -> dict:
+        """Parse Gemini response into a plain dict."""
+        text = response_text.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+        elif text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Gemini ingredient response as JSON: {e}")
+            return {
+                "detected_ingredients": [],
+                "recipes": [],
+                "analysis_notes": "Failed to parse response"
+            }

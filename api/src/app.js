@@ -299,6 +299,95 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
   res.json(result);
 });
 
+/**
+ * Send a fridge/pantry image buffer to the Python AI service for ingredient analysis.
+ * @param {Buffer} imageBuffer  Raw image bytes
+ * @param {string} mimeType     MIME type of the image
+ * @returns {Promise<object>}   Parsed JSON from the AI service
+ */
+async function callAIIngredientService(imageBuffer, mimeType = "image/jpeg") {
+  const aiApiUrl = process.env.AI_API_URL || "http://localhost:8000";
+
+  const formData = new FormData();
+  const blob = new Blob([imageBuffer], { type: mimeType });
+  formData.append("image", blob, "fridge.jpg");
+
+  const response = await fetch(`${aiApiUrl}/api/analyze-ingredients`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`AI ingredient service error ${response.status}: ${text}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Transform the AI ingredient service response into the shape the React frontend expects.
+ * @param {object} aiData  Response from the Python AI ingredient service
+ * @returns {object}       { detected: string[], recipes: { id, title, desc, missing }[] }
+ */
+function transformIngredientResponse(aiData) {
+  const detected = aiData.detected_ingredients || [];
+  const recipes = (aiData.recipes || []).map((r, idx) => ({
+    id: `r${idx + 1}`,
+    title: r.title || "Recipe",
+    desc: r.description || "",
+    missing: r.missing_ingredients || [],
+  }));
+  return { detected, recipes };
+}
+
+// ---------------------------------------------------------------------------
+// POST /analyze-ingredients
+//
+// Accepts a fridge/pantry photo and returns detected ingredients + recipe ideas.
+// Supports two content types:
+//   - application/json: { image: "<base64>" }
+//   - application/json: { requestId: "<uuid>" }  (Telegram upload)
+// ---------------------------------------------------------------------------
+app.post("/analyze-ingredients", analyzeLimiter, async (req, res) => {
+  let imageBuffer;
+  let mimeType = "image/jpeg";
+
+  try {
+    if (Buffer.isBuffer(req.body)) {
+      imageBuffer = req.body;
+    } else if (req.body && req.body.requestId) {
+      const { buffer, mimeType: telegramMimeType } = await fetchTelegramPhoto(req.body.requestId);
+      imageBuffer = buffer;
+      mimeType = telegramMimeType;
+    } else if (req.body && req.body.image) {
+      imageBuffer = Buffer.from(req.body.image, "base64");
+    } else {
+      return res.status(400).json({ message: "No image provided." });
+    }
+  } catch (err) {
+    console.error("Image retrieval error:", err.message);
+    return res.status(400).json({ message: err.message || "Failed to retrieve image." });
+  }
+
+  try {
+    const aiData = await callAIIngredientService(imageBuffer, mimeType);
+    if (!aiData.success) {
+      return res.status(502).json({
+        message: aiData.error || "AI ingredient analysis returned no results. Please try again with a clearer image.",
+      });
+    }
+    const result = transformIngredientResponse(aiData);
+    res.json(result);
+  } catch (err) {
+    console.error("AI ingredient analysis error:", err.message);
+    return res.status(502).json({
+      message: "AI ingredient analysis service is unavailable. Please ensure the AI server is running.",
+      detail: err.message,
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from loguru import logger
 
 from ..pipeline import FoodNutritionPipeline
+from ..gemini_layer.gemini_client import GeminiIngredientAnalyzer
 
 
 # Response Models
@@ -234,6 +235,39 @@ def create_app(
             logger.error(f"CV analysis failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     
+    @app.post("/api/analyze-ingredients")
+    async def analyze_ingredients(image: UploadFile = File(...)):
+        """
+        Analyze a fridge or pantry image for visible ingredients and recipe suggestions.
+
+        - **image**: Fridge/pantry image file (jpg, png, webp)
+
+        Returns a list of detected ingredients and 3 recipe ideas.
+        """
+        allowed_types = ["image/jpeg", "image/png", "image/webp"]
+        if image.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed: {allowed_types}"
+            )
+
+        try:
+            content = await image.read()
+            api_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
+            analyzer = GeminiIngredientAnalyzer(api_key=api_key)
+            result = analyzer.analyze_from_bytes(content, image.content_type)
+
+            return {
+                "success": True,
+                "timestamp": datetime.utcnow().isoformat(),
+                "detected_ingredients": result.get("detected_ingredients", []),
+                "recipes": result.get("recipes", []),
+                "analysis_notes": result.get("analysis_notes", ""),
+            }
+        except Exception as e:
+            logger.error(f"Ingredient analysis failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
     @app.get("/api/generate-aruco/{marker_id}")
     async def generate_aruco_marker(
         marker_id: int = 0,

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/ScanIngredients.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
@@ -18,6 +18,7 @@ export default function ScanIngredients() {
   );
   const [telegramMode, setTelegramMode] = useState(false);
   const [hasTelegramPhoto, setHasTelegramPhoto] = useState(false);
+  const [requestId, setRequestId] = useState(null);
   const [telegramStatus, setTelegramStatus] = useState("idle"); // idle | requesting | waiting | completed | error
   const pollRef = useRef(null);
 
@@ -25,33 +26,6 @@ export default function ScanIngredients() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [toast, setToast] = useState("");
-
-  const sampleResult = useMemo(
-    () => ({
-      detected: ["Eggs", "Milk", "Spinach", "Cherry tomatoes", "Bread"],
-      recipes: [
-        {
-          id: "r1",
-          title: "Spinach omelette",
-          desc: "Quick protein breakfast using eggs and spinach.",
-          missing: ["Cheese (optional)"],
-        },
-        {
-          id: "r2",
-          title: "Tomato egg toast",
-          desc: "Simple snack with eggs and tomatoes on bread.",
-          missing: ["Butter"],
-        },
-        {
-          id: "r3",
-          title: "Creamy spinach scramble",
-          desc: "Soft scramble using milk and spinach.",
-          missing: ["Onion", "Garlic"],
-        },
-      ],
-    }),
-    []
-  );
 
   function showToast(msg) {
     setToast(msg);
@@ -84,6 +58,7 @@ export default function ScanIngredients() {
     setResult(null);
     setTelegramMode(false);
     setHasTelegramPhoto(false);
+    setRequestId(null);
     setTelegramStatus("idle");
 
     if (pollRef.current) {
@@ -126,6 +101,7 @@ export default function ScanIngredients() {
       }
 
       const data = await resp.json();
+      setRequestId(data.requestId);
       setTelegramStatus("waiting");
       showToast("📱 Check Telegram – send a fridge photo!");
 
@@ -165,10 +141,38 @@ export default function ScanIngredients() {
     }
 
     setIsAnalyzing(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setResult(sampleResult);
-    setIsAnalyzing(false);
-    showToast("Ingredients detected ✅");
+
+    try {
+      let body;
+
+      if (hasTelegramPhoto) {
+        body = { requestId };
+      } else {
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(",")[1]);
+          reader.onerror = () => reject(new Error("Failed to read image file"));
+          reader.readAsDataURL(file);
+        });
+        body = { image: base64 };
+      }
+
+      const resp = await fetch(`${API_URL}/analyze-ingredients`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+      const data = await resp.json();
+      setResult(data);
+      showToast("Ingredients detected ✅");
+    } catch (err) {
+      console.error(err);
+      showToast("Analysis failed. Is the API running?");
+    } finally {
+      setIsAnalyzing(false);
+    }
   }
 
   function savePlannedMeal(recipe) {

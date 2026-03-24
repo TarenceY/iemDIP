@@ -6,20 +6,20 @@ to provide accurate nutrition information.
 """
 
 import os
-import re
-import base64
 import json
 from typing import Dict, Any, Optional, List
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from loguru import logger
 
+# New 2026 SDK Imports
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
-    logger.warning("google-generativeai not installed. Install with: pip install google-generativeai")
+    logger.warning("google-genai not installed. Install with: pip install google-genai")
 
 
 @dataclass
@@ -48,11 +48,6 @@ class NutritionResult:
     total_fat_g: float
     analysis_notes: str
     raw_response: str
-    backend_data: Dict[str, Any] = field(default_factory=dict)
-
-    def to_backend_data(self) -> Dict[str, Any]:
-        """Return a backend-friendly payload for persistence."""
-        return self.backend_data
 
 
 class GeminiNutritionAnalyzer:
@@ -110,17 +105,11 @@ Respond ONLY with valid JSON, no additional text."""
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        model: str = os.getenv("GEMINI_MODEL", "gemini-3.0-flash")
     ):
-        """
-        Initialize the Gemini analyzer.
-        
-        Args:
-            api_key: Google Gemini API key (or set GEMINI_API_KEY env var)
-            model: Gemini model to use
-        """
+        """Initialize the Gemini analyzer using the new genai.Client."""
         if not GEMINI_AVAILABLE:
-            raise ImportError("google-generativeai package not installed")
+            raise ImportError("google-genai package not installed")
         
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
@@ -128,9 +117,8 @@ Respond ONLY with valid JSON, no additional text."""
         
         self.model_name = model
         
-        # Configure Gemini
-        genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel(self.model_name)
+        # New SDK Client initialization
+        self.client = genai.Client(api_key=self.api_key)
         
         logger.info(f"Gemini analyzer initialized with model: {model}")
     
@@ -139,28 +127,36 @@ Respond ONLY with valid JSON, no additional text."""
         image_path: str,
         cv_metadata: str
     ) -> NutritionResult:
-        """
-        Analyze food nutrition from image with CV metadata.
-        
-        Args:
-            image_path: Path to the food image
-            cv_metadata: Metadata text from CV pipeline
+        """Analyze food nutrition from image file."""
+        # Load image bytes and detect mime type
+        path = Path(image_path)
+        if not path.exists():
+            raise FileNotFoundError(f"Image not found: {image_path}")
             
-        Returns:
-            NutritionResult with detailed nutrition info
-        """
-        # Load and encode image
-        image_data = self._load_image(image_path)
-        
-        # Create prompt with CV metadata
+        mime_type = self._get_mime_type(path.suffix)
+        with open(path, "rb") as f:
+            image_bytes = f.read()
+            
+        return self.analyze_from_bytes(image_bytes, cv_metadata, mime_type)
+    
+    def analyze_from_bytes(
+        self,
+        image_bytes: bytes,
+        cv_metadata: str,
+        mime_type: str = "image/jpeg"
+    ) -> NutritionResult:
+        """Analyze nutrition from image bytes using the new SDK syntax."""
         prompt = self.NUTRITION_PROMPT.format(cv_metadata=cv_metadata)
         
         try:
-            # Call Gemini API
-            response = self.model.generate_content([
-                prompt,
-                image_data
-            ])
+            # The new SDK handles content parts using types.Part
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=[
+                    types.Part.from_text(text=prompt), # Explicit text part
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                ]
+            )
             
             # Parse response
             result = self._parse_response(response.text)
@@ -171,137 +167,42 @@ Respond ONLY with valid JSON, no additional text."""
         except Exception as e:
             logger.error(f"Gemini analysis failed: {e}")
             raise
-    
-    def analyze_from_bytes(
-        self,
-        image_bytes: bytes,
-        cv_metadata: str,
-        mime_type: str = "image/jpeg"
-    ) -> NutritionResult:
-        """
-        Analyze nutrition from image bytes.
-        
-        Args:
-            image_bytes: Image data as bytes
-            cv_metadata: Metadata text from CV pipeline
-            mime_type: Image MIME type
-            
-        Returns:
-            NutritionResult with detailed nutrition info
-        """
-        # Create image part
-        image_data = {
-            "inline_data": {
-                "mime_type": mime_type,
-                "data": base64.b64encode(image_bytes).decode("utf-8")
-            }
-        }
-        
-        prompt = self.NUTRITION_PROMPT.format(cv_metadata=cv_metadata)
-        
-        try:
-            response = self.model.generate_content([
-                prompt,
-                image_data
-            ])
-            
-            return self._parse_response(response.text)
-            
-        except Exception as e:
-            logger.error(f"Gemini analysis failed: {e}")
-            raise
-    
-    def _load_image(self, image_path: str) -> Dict[str, Any]:
-        """Load image and prepare for Gemini API."""
-        path = Path(image_path)
-        
-        if not path.exists():
-            raise FileNotFoundError(f"Image not found: {image_path}")
-        
-        # Determine MIME type
+
+    def _get_mime_type(self, suffix: str) -> str:
+        """Helper to map file extensions to MIME types."""
         mime_types = {
             ".jpg": "image/jpeg",
             ".jpeg": "image/jpeg",
             ".png": "image/png",
             ".webp": "image/webp",
-            ".gif": "image/gif"
         }
-        mime_type = mime_types.get(path.suffix.lower(), "image/jpeg")
-        
-        # Read and encode
-        with open(path, "rb") as f:
-            image_bytes = f.read()
-        
-        # Use the 'inline_data' wrapper required by the Gemini SDK
-        return {
-            "inline_data": {
-                "mime_type": mime_type,
-                "data": base64.b64encode(image_bytes).decode("utf-8")
-            }
-        }
+        return mime_types.get(suffix.lower(), "image/jpeg")
     
     def _parse_response(self, response_text: str) -> NutritionResult:
         """Parse Gemini response into NutritionResult."""
-        data = None
-
-        # Try multiple extraction strategies in order of reliability.
-        # 1. Strip markdown code fences (```json ... ``` or ``` ... ```)
-        stripped = response_text.strip()
-        if stripped.startswith("```"):
-            fence_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', stripped, re.DOTALL)
-            if fence_match:
-                try:
-                    data = json.loads(fence_match.group(1))
-                except json.JSONDecodeError:
-                    pass
-
-        # 2. The whole (stripped) text is JSON
-        if data is None:
-            try:
-                data = json.loads(stripped)
-            except json.JSONDecodeError:
-                pass
-
-        # 3. Find the outermost JSON object in the text (greedy – first '{' to last '}')
-        #    This handles Gemini prepending introductory sentences before the JSON.
-        if data is None:
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if json_match:
-                try:
-                    data = json.loads(json_match.group())
-                except json.JSONDecodeError:
-                    pass
-
-        if data is None:
-            logger.error("Failed to parse Gemini response as JSON")
-            logger.debug(f"Raw response (first 500 chars): {response_text[:500]}")
+        # Clean response (remove markdown code blocks)
+        text = response_text.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+        elif text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+        
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Gemini response as JSON: {e}")
             return NutritionResult(
-                food_items=[],
-                total_calories=0,
-                total_protein_g=0,
-                total_carbs_g=0,
-                total_fat_g=0,
-                analysis_notes="Failed to parse response",
-                raw_response=response_text,
-                backend_data={
-                    "items": [],
-                    "summary": {
-                        "food_name": "Unknown meal",
-                        "calories": 0,
-                        "carbs": 0,
-                        "protein": 0,
-                        "fats": 0,
-                        "fiber": 0,
-                        "sodium": 0,
-                        "notes": "Failed to parse response"
-                    }
-                }
+                food_items=[], total_calories=0, total_protein_g=0,
+                total_carbs_g=0, total_fat_g=0,
+                analysis_notes="Failed to parse response", raw_response=response_text
             )
         
         # Parse food items
-        food_items = []
-        for item in data.get("food_items", []):
-            nutrition = NutritionInfo(
+        food_items = [
+            NutritionInfo(
                 food_name=item.get("food_name", "Unknown"),
                 serving_size=item.get("serving_size", "1 serving"),
                 calories=float(item.get("calories", 0)),
@@ -313,26 +214,11 @@ Respond ONLY with valid JSON, no additional text."""
                 sodium_mg=float(item.get("sodium_mg", 0)),
                 confidence=item.get("confidence", "medium"),
                 notes=item.get("notes")
-            )
-            food_items.append(nutrition)
+            ) for item in data.get("food_items", [])
+        ]
         
-        # Get totals
         totals = data.get("total_nutrition", {})
         
-        backend_items = [
-            {
-                "food_name": item.food_name,
-                "calories": item.calories,
-                "carbs": item.carbohydrates_g,
-                "protein": item.protein_g,
-                "fats": item.fat_g,
-                "fiber": item.fiber_g,
-                "sodium": item.sodium_mg,
-                "notes": item.notes
-            }
-            for item in food_items
-        ]
-
         return NutritionResult(
             food_items=food_items,
             total_calories=float(totals.get("calories", sum(f.calories for f in food_items))),
@@ -340,18 +226,5 @@ Respond ONLY with valid JSON, no additional text."""
             total_carbs_g=float(totals.get("carbohydrates_g", sum(f.carbohydrates_g for f in food_items))),
             total_fat_g=float(totals.get("fat_g", sum(f.fat_g for f in food_items))),
             analysis_notes=data.get("analysis_notes", ""),
-            raw_response=response_text,
-            backend_data={
-                "items": backend_items,
-                "summary": {
-                    "food_name": ", ".join([item.food_name for item in food_items]) or "Detected meal",
-                    "calories": float(totals.get("calories", sum(f.calories for f in food_items))),
-                    "carbs": float(totals.get("carbohydrates_g", sum(f.carbohydrates_g for f in food_items))),
-                    "protein": float(totals.get("protein_g", sum(f.protein_g for f in food_items))),
-                    "fats": float(totals.get("fat_g", sum(f.fat_g for f in food_items))),
-                    "fiber": float(sum(f.fiber_g for f in food_items)),
-                    "sodium": float(sum(f.sodium_mg for f in food_items)),
-                    "notes": data.get("analysis_notes", "")
-                }
-            }
+            raw_response=response_text
         )

@@ -32,3 +32,4 @@ __pycache__/
 ai/.env
 ai/src/.env
 api/src/.env
+bot/.env

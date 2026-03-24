@@ -133,6 +133,10 @@ AI_API_URL=http://localhost:8000
 # Public URL of this API (used to build photo URLs locally)
 PUBLIC_API_URL=http://localhost:3000
 
+# URL of the React frontend (for CORS).
+# React dev server uses port 3001 when port 3000 is already taken by this API.
+FRONTEND_URL=http://localhost:3001
+
 # AWS S3 – leave blank to use local filesystem for photo storage
 AWS_REGION=
 AWS_ACCESS_KEY_ID=

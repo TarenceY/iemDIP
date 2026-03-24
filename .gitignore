@@ -31,3 +31,4 @@ __pycache__/
 # Environment files with secrets
 ai/.env
 ai/src/.env
+api/src/.env

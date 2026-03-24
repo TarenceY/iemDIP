@@ -2,6 +2,7 @@
 require("dotenv").config();
 console.log("Starting server...");
 
+const https = require("https");
 const recipeRoutes = require("./routes/recipes");
 const express = require("express");
 const cors = require("cors");
@@ -9,7 +10,7 @@ const app = express();
 
 // Allow requests from the React frontend
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: process.env.FRONTEND_URL || "http://localhost:3001",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],

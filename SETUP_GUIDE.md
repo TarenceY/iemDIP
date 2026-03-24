@@ -395,7 +395,7 @@ This creates `aruco_marker.png`.
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | `http://localhost:3000/health` shows an error | API not running | Run `npm start` in `api/src/` |
-| `mongoDB: "disconnected"` in health check | Wrong `MONGO_URI` or IP not whitelisted | Check `MONGO_URI` in `api/src/.env`; add your IP to the Atlas Network Access list |
+| `mongoDB: "disconnected"` in health check | Wrong `MONGO_URI` or IP not whitelisted | Check `MONGO_URI` in `api/src/.env`; in MongoDB Atlas go to **Network Access → Add IP Address** and add your current IP (or `0.0.0.0/0` for development) |
 | `http://localhost:8000/` not reachable | AI server not running | Run `python main.py server` in `ai/` |
 | React webapp shows a blank page | Build error or wrong port | Check Terminal 4 output; go to `http://localhost:3001` |
 | Bot not responding | Bot not running or wrong token | Check Terminal 3; verify `TELEGRAM_TOKEN` in `bot/.env` |
@@ -406,7 +406,8 @@ This creates `aruco_marker.png`.
 |---------|-------------|-----|
 | "AI analysis service is unavailable" (502) | Python AI server not running | `cd ai && python main.py server` |
 | Calories show 0 | `GEMINI_API_KEY` missing or invalid | Add/correct the key in `ai/.env` |
-| "Is the API running?" message | Express API unreachable from React | Ensure `npm start` is running in `api/src/` and `REACT_APP_API_URL=http://localhost:3000` in `.env.local` |
+| "Is the API running?" message on login | Express API not started | Ensure `npm start` is running in `api/src/` and check `http://localhost:3000/health` |
+| Login blocked by CORS error (browser console) | `FRONTEND_URL` mismatch in `api/src/.env` | Set `FRONTEND_URL=http://localhost:3001` in `api/src/.env` (React dev server uses 3001 when 3000 is taken) |
 | Analysis takes a long time | Large photo or slow internet | Use a smaller image; Gemini API can be slow on first call |
 | YOLO detects nothing | Low-quality or blurry photo | Use a well-lit, top-down photo against a plain background |
 | ArUco marker not detected | Marker too small or at an angle | Print at 5 cm × 5 cm; place flat and fully visible |
@@ -424,7 +425,7 @@ This creates `aruco_marker.png`.
 
 Run through this list whenever something isn't working:
 
-- [ ] `api/src/.env` exists and has `MONGO_URI`, `TELEGRAM_TOKEN`, `PORT=3000`
+- [ ] `api/src/.env` exists and has `MONGO_URI`, `TELEGRAM_TOKEN`, `PORT=3000`, `FRONTEND_URL=http://localhost:3001`
 - [ ] `ai/.env` exists and has `GEMINI_API_KEY`
 - [ ] `.env.local` exists at repo root with `REACT_APP_API_URL=http://localhost:3000`
 - [ ] `bot/.env` exists and has `TELEGRAM_TOKEN` and `API_URL=http://localhost:3000`

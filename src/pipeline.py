@@ -264,3 +264,164 @@ class FoodNutritionPipeline:
             CVResult from the CV pipeline
         """
         return self.cv_pipeline.process_file(image_path)
+    
+    def extract_ingredients(
+        self,
+        image_path: str,
+        aruco_scale: bool = True
+    ) -> IngredientList:
+        """
+        Extract ingredients from an image with optional ArUco measurements.
+        
+        Args:
+            image_path: Path to ingredient image
+            aruco_scale: Whether to use ArUco scale for measurements
+            
+        Returns:
+            IngredientList with detected ingredients and quantities
+        """
+        try:
+            logger.info(f"Extracting ingredients from: {image_path}")
+            
+            # Get CV metadata (ArUco scale if available)
+            cv_metadata = None
+            if aruco_scale:
+                cv_result = self.cv_pipeline.process_file(image_path)
+                if cv_result.pixels_per_cm:
+                    # Convert pixels_per_cm to cm_per_pixel for Gemini context
+                    cm_per_pixel = 1.0 / cv_result.pixels_per_cm
+                    marker_ids = [res.marker_id for res in cv_result.aruco_results]
+                    cv_metadata = {
+                        "aruco_scale_cm_per_pixel": cm_per_pixel,
+                        "detected_aruco_markers": marker_ids,
+                    }
+            
+            # Extract ingredients with optional CV metadata
+            ingredient_list = self.recipe_analyzer.ingredient_extractor.extract_from_file(
+                image_path,
+                cv_metadata=cv_metadata
+            )
+            
+            logger.info(f"Extracted {len(ingredient_list.ingredients)} ingredients")
+            return ingredient_list
+            
+        except Exception as e:
+            logger.error(f"Ingredient extraction failed: {e}")
+            raise
+    
+    def analyze_and_recommend_recipes(
+        self,
+        image_path: str,
+        calories: Optional[NutritionRange] = None,
+        protein_g: Optional[NutritionRange] = None,
+        carbohydrates_g: Optional[NutritionRange] = None,
+        fat_g: Optional[NutritionRange] = None,
+        limit: int = 5,
+    ) -> Dict[str, Any]:
+        """
+        Complete meal planning workflow: Extract ingredients and recommend recipes.
+        
+        Uses ArUco measurements for precise ingredient quantities to ensure
+        returned recipes can actually be made.
+        
+        Args:
+            image_path: Path to ingredient image
+            calories: Calorie range filter
+            protein_g: Protein range filter
+            carbohydrates_g: Carbohydrates range filter
+            fat_g: Fat range filter
+            limit: Maximum number of recipes to return
+            
+        Returns:
+            Dict with extracted ingredients and recipe recommendations
+        """
+        try:
+            logger.info(f"Starting meal planning analysis for: {image_path}")
+            
+            # Step 1: Get CV metadata (ArUco scale)
+            cv_result = self.cv_pipeline.process_file(image_path)
+            cv_metadata = None
+            if cv_result.pixels_per_cm:
+                cm_per_pixel = 1.0 / cv_result.pixels_per_cm
+                marker_ids = [res.marker_id for res in cv_result.aruco_results]
+                cv_metadata = {
+                    "aruco_scale_cm_per_pixel": cm_per_pixel,
+                    "detected_aruco_markers": marker_ids,
+                }
+            
+            # Step 2: Extract ingredients with measured quantities
+            ingredient_list = self.recipe_analyzer.ingredient_extractor.extract_from_file(
+                image_path,
+                cv_metadata=cv_metadata
+            )
+            
+            # Step 3: Find feasible recipes
+            recommendations = self.recipe_analyzer.find_recipes_by_ingredients_and_nutrition(
+                ingredients=ingredient_list,
+                calories=calories,
+                protein_g=protein_g,
+                carbohydrates_g=carbohydrates_g,
+                fat_g=fat_g,
+            )
+            
+            # Limit results
+            if limit:
+                recommendations = recommendations[:limit]
+            
+            logger.info(f"Found {len(recommendations)} feasible recipes")
+            
+            return {
+                "success": True,
+                "extracted_ingredients": ingredient_list.to_dict(),
+                "recipe_recommendations": [rec.to_dict() for rec in recommendations],
+                "total_recommendations": len(recommendations),
+                "cv_metadata": cv_metadata or {},
+            }
+            
+        except Exception as e:
+            logger.error(f"Meal planning analysis failed: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+            }
+    
+    def get_recipe_count(self) -> int:
+        """Get total number of recipes in the database."""
+        return self.recipe_analyzer.db.get_recipe_count()
+    
+    def find_recipes_by_nutrition(
+        self,
+        calories: Optional[NutritionRange] = None,
+        protein_g: Optional[NutritionRange] = None,
+        carbohydrates_g: Optional[NutritionRange] = None,
+        fat_g: Optional[NutritionRange] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Find recipes by nutrition criteria.
+        
+        Args:
+            calories: Calorie range
+            protein_g: Protein range
+            carbohydrates_g: Carbohydrates range
+            fat_g: Fat range
+            
+        Returns:
+            List of matching recipes as dictionaries
+        """
+        recipes = self.recipe_analyzer.find_recipes_by_nutrition(
+            calories=calories,
+            protein_g=protein_g,
+            carbohydrates_g=carbohydrates_g,
+            fat_g=fat_g,
+        )
+        return [r.to_dict() for r in recipes]
+    
+    def load_recipes_from_json(self, json_path: str) -> None:
+        """
+        Load recipes from JSON file.
+        
+        Args:
+            json_path: Path to recipe JSON file
+        """
+        self.recipe_analyzer.db.load_from_json(json_path)
+        logger.info(f"Loaded recipes from: {json_path}")

@@ -104,6 +104,9 @@ body {
 
 .primary-btn,
 .get-started-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   border: none;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--deep-green), var(--deep-green-2));
@@ -112,6 +115,23 @@ body {
   cursor: pointer;
   padding: 12px 22px;
   transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.primary-btn::before,
+.get-started-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.16));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.4s ease;
+  border-radius: inherit;
+}
+
+.primary-btn:hover::before,
+.get-started-btn:hover::before {
+  transform: scaleX(1);
 }
 
 .secondary-btn {
@@ -133,7 +153,7 @@ body {
 
 .hero-shell {
   background: var(--off-white);
-  padding: 114px 5vw 96px;
+  padding: 0px 5vw 80px;
 }
 
 .chapter-divider-hero {
@@ -728,6 +748,7 @@ body {
 .final-cta-btn {
   margin-top: 24px;
   font-size: 18px;
+  font-weight: 600;
   padding: 18px 42px;
 }
 
@@ -820,5 +841,12 @@ body {
   .get-started-btn {
     padding: 9px 14px;
     font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary-btn::before,
+  .get-started-btn::before {
+    transition: none;
   }
 }

@@ -1,0 +1,222 @@
+[
+  {
+    "id": "grilled_chicken_salad",
+    "name": "Grilled Chicken Salad",
+    "ingredients": ["chicken breast", "lettuce", "tomato", "cucumber", "olive oil", "lemon"],
+    "nutrition": {
+      "calories": 350,
+      "protein_g": 35,
+      "carbohydrates_g": 15,
+      "fat_g": 16,
+      "fiber_g": 3,
+      "sugar_g": 5,
+      "sodium_mg": 250
+    },
+    "servings": 1,
+    "prep_time_min": 15,
+    "cook_time_min": 20,
+    "difficulty": "easy",
+    "cuisine": "Mediterranean",
+    "dietary_tags": ["high-protein", "low-carb", "gluten-free"],
+    "instructions": "1. Grill chicken breast. 2. Chop fresh vegetables. 3. Mix with olive oil and lemon juice.",
+    "source": "healthy-recipes"
+  },
+  {
+    "id": "vegetable_stir_fry",
+    "name": "Vegetable Stir Fry",
+    "ingredients": ["broccoli", "bell pepper", "onion", "soy sauce", "garlic", "ginger", "sesame oil"],
+    "nutrition": {
+      "calories": 280,
+      "protein_g": 8,
+      "carbohydrates_g": 35,
+      "fat_g": 12,
+      "fiber_g": 6,
+      "sugar_g": 8,
+      "sodium_mg": 450
+    },
+    "servings": 2,
+    "prep_time_min": 10,
+    "cook_time_min": 15,
+    "difficulty": "easy",
+    "cuisine": "Asian",
+    "dietary_tags": ["vegan", "gluten-free"],
+    "instructions": "1. Prep vegetables. 2. Heat sesame oil in wok. 3. Stir fry vegetables with garlic and ginger. 4. Season with soy sauce.",
+    "source": "healthy-recipes"
+  },
+  {
+    "id": "quinoa_bowl",
+    "name": "Quinoa Buddha Bowl",
+    "ingredients": ["quinoa", "chickpeas", "sweet potato", "kale", "tahini", "lemon"],
+    "nutrition": {
+      "calories": 420,
+      "protein_g": 15,
+      "carbohydrates_g": 52,
+      "fat_g": 18,
+      "fiber_g": 10,
+      "sugar_g": 6,
+      "sodium_mg": 200
+    },
+    "servings": 1,
+    "prep_time_min": 15,
+    "cook_time_min": 20,
+    "difficulty": "easy",
+    "cuisine": "Middle Eastern",
+    "dietary_tags": ["vegan", "high-fiber", "gluten-free"],
+    "instructions": "1. Cook quinoa. 2. Roast sweet potato and chickpeas. 3. Massage kale. 4. Combine and drizzle with tahini dressing.",
+    "source": "vegan-recipes"
+  },
+  {
+    "id": "salmon_fillet",
+    "name": "Baked Salmon with Asparagus",
+    "ingredients": ["salmon", "asparagus", "olive oil", "lemon", "garlic", "herbs"],
+    "nutrition": {
+      "calories": 380,
+      "protein_g": 40,
+      "carbohydrates_g": 8,
+      "fat_g": 20,
+      "fiber_g": 2,
+      "sugar_g": 2,
+      "sodium_mg": 300
+    },
+    "servings": 1,
+    "prep_time_min": 10,
+    "cook_time_min": 20,
+    "difficulty": "medium",
+    "cuisine": "Mediterranean",
+    "dietary_tags": ["high-protein", "low-carb", "gluten-free", "paleo"],
+    "instructions": "1. Preheat oven to 400F. 2. Place salmon and asparagus on sheet. 3. Drizzle with olive oil and lemon. 4. Bake for 15-20 minutes.",
+    "source": "paleo-recipes"
+  },
+  {
+    "id": "sweet_potato_curry",
+    "name": "Sweet Potato and Lentil Curry",
+    "ingredients": ["sweet potato", "lentils", "coconut milk", "curry spices", "onion", "garlic", "tomato"],
+    "nutrition": {
+      "calories": 340,
+      "protein_g": 12,
+      "carbohydrates_g": 48,
+      "fat_g": 12,
+      "fiber_g": 9,
+      "sugar_g": 12,
+      "sodium_mg": 400
+    },
+    "servings": 2,
+    "prep_time_min": 15,
+    "cook_time_min": 30,
+    "difficulty": "medium",
+    "cuisine": "Indian",
+    "dietary_tags": ["vegan", "high-fiber", "spicy"],
+    "instructions": "1. Sauté aromatics. 2. Add curry spices. 3. Add sweet potato and lentils. 4. Simmer in coconut milk for 25 minutes.",
+    "source": "curry-recipes"
+  },
+  {
+    "id": "greek_yogurt_parfait",
+    "name": "Greek Yogurt Parfait with Berries",
+    "ingredients": ["greek yogurt", "berries", "granola", "honey", "almonds"],
+    "nutrition": {
+      "calories": 280,
+      "protein_g": 18,
+      "carbohydrates_g": 35,
+      "fat_g": 8,
+      "fiber_g": 4,
+      "sugar_g": 20,
+      "sodium_mg": 80
+    },
+    "servings": 1,
+    "prep_time_min": 5,
+    "cook_time_min": 0,
+    "difficulty": "easy",
+    "cuisine": "Mediterranean",
+    "dietary_tags": ["high-protein", "vegetarian"],
+    "instructions": "1. Layer Greek yogurt in a bowl. 2. Top with berries. 3. Add granola and almonds. 4. Drizzle with honey.",
+    "source": "breakfast-recipes"
+  },
+  {
+    "id": "black_bean_tacos",
+    "name": "Black Bean Tacos",
+    "ingredients": ["black beans", "taco shells", "lettuce", "tomato", "avocado", "salsa", "lime"],
+    "nutrition": {
+      "calories": 320,
+      "protein_g": 12,
+      "carbohydrates_g": 42,
+      "fat_g": 12,
+      "fiber_g": 8,
+      "sugar_g": 4,
+      "sodium_mg": 520
+    },
+    "servings": 2,
+    "prep_time_min": 10,
+    "cook_time_min": 10,
+    "difficulty": "easy",
+    "cuisine": "Mexican",
+    "dietary_tags": ["vegan", "high-fiber"],
+    "instructions": "1. Warm black beans. 2. Heat taco shells. 3. Assemble with fresh vegetables. 4. Top with salsa and lime.",
+    "source": "vegetarian-recipes"
+  },
+  {
+    "id": "chicken_breast_pasta",
+    "name": "Grilled Chicken Whole Wheat Pasta",
+    "ingredients": ["whole wheat pasta", "chicken breast", "tomato", "garlic", "basil", "olive oil"],
+    "nutrition": {
+      "calories": 480,
+      "protein_g": 38,
+      "carbohydrates_g": 52,
+      "fat_g": 14,
+      "fiber_g": 8,
+      "sugar_g": 5,
+      "sodium_mg": 350
+    },
+    "servings": 1,
+    "prep_time_min": 10,
+    "cook_time_min": 25,
+    "difficulty": "medium",
+    "cuisine": "Italian",
+    "dietary_tags": ["high-protein", "moderate-carb"],
+    "instructions": "1. Cook pasta. 2. Grill chicken. 3. Sauté tomato and garlic. 4. Combine and garnish with basil.",
+    "source": "italian-recipes"
+  },
+  {
+    "id": "smoothie_protein",
+    "name": "Protein Smoothie",
+    "ingredients": ["banana", "protein powder", "almond milk", "almond butter", "berries"],
+    "nutrition": {
+      "calories": 250,
+      "protein_g": 25,
+      "carbohydrates_g": 28,
+      "fat_g": 6,
+      "fiber_g": 4,
+      "sugar_g": 15,
+      "sodium_mg": 120
+    },
+    "servings": 1,
+    "prep_time_min": 5,
+    "cook_time_min": 0,
+    "difficulty": "easy",
+    "cuisine": "Modern",
+    "dietary_tags": ["high-protein", "vegetarian"],
+    "instructions": "1. Add all ingredients to blender. 2. Blend until smooth. 3. Serve immediately.",
+    "source": "smoothie-recipes"
+  },
+  {
+    "id": "tuna_salad_wrap",
+    "name": "Tuna Salad Whole Wheat Wrap",
+    "ingredients": ["canned tuna", "whole wheat wrap", "lettuce", "tomato", "cucumber", "mayo", "lemon"],
+    "nutrition": {
+      "calories": 320,
+      "protein_g": 30,
+      "carbohydrates_g": 32,
+      "fat_g": 10,
+      "fiber_g": 5,
+      "sugar_g": 3,
+      "sodium_mg": 600
+    },
+    "servings": 1,
+    "prep_time_min": 10,
+    "cook_time_min": 0,
+    "difficulty": "easy",
+    "cuisine": "American",
+    "dietary_tags": ["high-protein", "quick"],
+    "instructions": "1. Mix tuna with mayo. 2. Chop vegetables. 3. Assemble wrap with lettuce as base. 4. Add tuna and vegetables. 5. Roll tightly.",
+    "source": "quick-recipes"
+  }
+]

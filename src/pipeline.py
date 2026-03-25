@@ -4,12 +4,13 @@ Food Nutrition Analysis Pipeline
 Main pipeline that orchestrates:
 1. Computer Vision Layer (ArUco + YOLOv8)
 2. Gemini AI Layer (Nutrition Analysis)
+3. Recipe Layer (Ingredient Detection + Recipe Recommendations)
 """
 
 import os
 import cv2
 import numpy as np
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import json
@@ -17,6 +18,12 @@ from loguru import logger
 
 from .cv_layer import CVPipeline, CVResult
 from .gemini_layer import GeminiNutritionAnalyzer, NutritionResult
+from .recipe_layer import (
+    RecipeAnalyzer,
+    IngredientList,
+    RecipeRecommendation,
+    NutritionRange,
+)
 
 
 @dataclass
@@ -37,7 +44,8 @@ class FoodNutritionPipeline:
     1. Image Input
     2. CV Layer: ArUco detection (scale) + YOLOv8 (food detection)
     3. Gemini Layer: Nutrition analysis with CV metadata
-    4. Output: Structured nutrition data
+    4. Recipe Layer: Ingredient extraction + Recipe recommendations
+    5. Output: Structured nutrition and recipe data
     """
     
     def __init__(
@@ -47,7 +55,8 @@ class FoodNutritionPipeline:
         aruco_marker_size_cm: float = 5.0,
         yolo_model_path: str = "yolov8n.pt",
         confidence_threshold: float = 0.5,
-        device: str = "auto"
+        device: str = "auto",
+        recipe_db_path: Optional[str] = None,
     ):
         """
         Initialize the complete pipeline.
@@ -59,6 +68,7 @@ class FoodNutritionPipeline:
             yolo_model_path: Path to YOLO model
             confidence_threshold: Detection confidence threshold
             device: Device for CV inference
+            recipe_db_path: Path to recipe database JSON file (optional)
         """
         # Initialize CV Pipeline
         self.cv_pipeline = CVPipeline(
@@ -74,7 +84,22 @@ class FoodNutritionPipeline:
             model=gemini_model
         )
         
+        # Initialize Recipe Analyzer
+        self.recipe_analyzer = RecipeAnalyzer(
+            gemini_api_key=gemini_api_key,
+            gemini_model=gemini_model,
+        )
+        
+        # Load recipe database if provided
+        if recipe_db_path and Path(recipe_db_path).exists():
+            try:
+                self.recipe_analyzer.load_recipes_from_json(recipe_db_path)
+                logger.info(f"Loaded recipes from: {recipe_db_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load recipe database: {e}")
+        
         logger.info("Food Nutrition Pipeline initialized")
+
     
     def analyze(
         self,

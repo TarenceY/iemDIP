@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/EditProfile.css";
-import AppLayout from "../components/AppLayout";
+import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -33,7 +33,6 @@ export default function EditProfile() {
     []
   );
 
-  // Load current profile from API
   useEffect(() => {
     if (!userId) {
       setLoading(false);
@@ -99,121 +98,185 @@ export default function EditProfile() {
     }
   }
 
+  function handleLogout() {
+    localStorage.removeItem("seefood_user_id");
+    localStorage.removeItem("seefood_username");
+    navigate("/login");
+  }
+
   return (
-    <AppLayout activePage="profile">
-      <section className="editprofile-hero">
-        <div>
-          <h1>Edit Profile</h1>
-          <p className="editprofile-subtitle">
-            Update your preferences and nutrition targets.
-          </p>
+    <div className="editprofile-container">
+      <header className="editprofile-header">
+        <div
+          className="editprofile-brand"
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/home")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/home");
+          }}
+        >
+          <img src={seefoodLogo} alt="SeeFood logo" />
         </div>
 
-        <div className="editprofile-actions">
-          <button className="ghost-btn" onClick={() => navigate("/profile")}>
-            Cancel
+        <nav className="editprofile-nav">
+          <button
+            className="editprofile-nav-btn"
+            onClick={() => navigate("/home")}
+          >
+            Home
           </button>
-          <button className="primary-btn" onClick={save} disabled={isSaving || loading}>
-            {isSaving ? "Saving…" : "Save changes"}
+          <button
+            className="editprofile-nav-btn"
+            onClick={() => navigate("/dashboard")}
+          >
+            Dashboard
           </button>
-        </div>
-      </section>
+          <button
+            className="editprofile-nav-btn"
+            onClick={() => navigate("/history")}
+          >
+            History
+          </button>
+          <button
+            className="editprofile-nav-btn active"
+            onClick={() => navigate("/profile")}
+          >
+            Profile
+          </button>
+        </nav>
 
-      {loading && <div className="panel"><div className="panel-head"><h2>Loading…</h2></div></div>}
-      {error && <div style={{ color: "red", padding: "12px" }}>{error}</div>}
+        <button className="editprofile-logout-btn" onClick={handleLogout}>
+          Log out
+        </button>
+      </header>
 
-      {!loading && (
-        <section className="editprofile-grid">
-          {/* Basic info */}
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Basic information</h2>
-              <span className="pill">Edit</span>
-            </div>
-
-            <div className="form-grid">
-              <div className="field">
-                <label>Age</label>
-                <input
-                  className="text-input"
-                  type="number"
-                  min="1"
-                  value={profile.age}
-                  onChange={(e) => updateField("age", e.target.value === "" ? "" : Number(e.target.value))}
-                />
-              </div>
-
-              <div className="field">
-                <label>Gender</label>
-                <select
-                  className="select-input"
-                  value={profile.gender}
-                  onChange={(e) => updateField("gender", e.target.value)}
-                >
-                  <option value="">Select</option>
-                  <option>Female</option>
-                  <option>Male</option>
-                  <option>Non-binary</option>
-                  <option>Prefer not to say</option>
-                </select>
-              </div>
-
-              <div className="field">
-                <label>Goal</label>
-                <select
-                  className="select-input"
-                  value={profile.goals[0] || ""}
-                  onChange={(e) => updateField("goals", e.target.value ? [e.target.value] : [])}
-                >
-                  <option value="">Select</option>
-                  {goals.map((g) => (
-                    <option key={g}>{g}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field">
-                <label>Dietary preference</label>
-                <select
-                  className="select-input"
-                  value={profile.restrictions[0] || ""}
-                  onChange={(e) =>
-                    updateField("restrictions", e.target.value ? [e.target.value] : [])
-                  }
-                >
-                  <option value="">No preference</option>
-                  {diets.map((d) => (
-                    <option key={d}>{d}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+      <main className="editprofile-content">
+        <section className="editprofile-hero">
+          <div>
+            <h1>Edit Profile</h1>
+            <p className="editprofile-subtitle">
+              Update your preferences and nutrition targets.
+            </p>
           </div>
 
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Dislikes</h2>
-              <span className="pill">Optional</span>
-            </div>
-            <div className="field">
-              <label>Foods you dislike (comma-separated)</label>
-              <input
-                className="text-input"
-                value={profile.dislikes.join(", ")}
-                onChange={(e) =>
-                  updateField(
-                    "dislikes",
-                    e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                  )
-                }
-                placeholder="e.g., broccoli, mushrooms"
-              />
-            </div>
+          <div className="editprofile-actions">
+            <button className="ghost-btn" onClick={() => navigate("/profile")}>
+              Cancel
+            </button>
+            <button className="primary-btn" onClick={save} disabled={isSaving || loading}>
+              {isSaving ? "Saving…" : "Save changes"}
+            </button>
           </div>
         </section>
-      )}
 
-      {toast && <div className="toast">{toast}</div>}
-    </AppLayout>
+        {loading && (
+          <div className="panel">
+            <div className="panel-head">
+              <h2>Loading…</h2>
+            </div>
+          </div>
+        )}
+
+        {error && <div style={{ color: "red", padding: "12px" }}>{error}</div>}
+
+        {!loading && (
+          <section className="editprofile-grid">
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Basic information</h2>
+                <span className="pill">Edit</span>
+              </div>
+
+              <div className="form-grid">
+                <div className="field">
+                  <label>Age</label>
+                  <input
+                    className="text-input"
+                    type="number"
+                    min="1"
+                    value={profile.age}
+                    onChange={(e) =>
+                      updateField("age", e.target.value === "" ? "" : Number(e.target.value))
+                    }
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Gender</label>
+                  <select
+                    className="select-input"
+                    value={profile.gender}
+                    onChange={(e) => updateField("gender", e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    <option>Female</option>
+                    <option>Male</option>
+                    <option>Non-binary</option>
+                    <option>Prefer not to say</option>
+                  </select>
+                </div>
+
+                <div className="field">
+                  <label>Goal</label>
+                  <select
+                    className="select-input"
+                    value={profile.goals[0] || ""}
+                    onChange={(e) => updateField("goals", e.target.value ? [e.target.value] : [])}
+                  >
+                    <option value="">Select</option>
+                    {goals.map((g) => (
+                      <option key={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="field">
+                  <label>Dietary preference</label>
+                  <select
+                    className="select-input"
+                    value={profile.restrictions[0] || ""}
+                    onChange={(e) =>
+                      updateField("restrictions", e.target.value ? [e.target.value] : [])
+                    }
+                  >
+                    <option value="">No preference</option>
+                    {diets.map((d) => (
+                      <option key={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Dislikes</h2>
+                <span className="pill">Optional</span>
+              </div>
+              <div className="field">
+                <label>Foods you dislike (comma-separated)</label>
+                <input
+                  className="text-input"
+                  value={profile.dislikes.join(", ")}
+                  onChange={(e) =>
+                    updateField(
+                      "dislikes",
+                      e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                    )
+                  }
+                  placeholder="e.g., broccoli, mushrooms"
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {toast && <div className="toast">{toast}</div>}
+      </main>
+    </div>
   );
 }

@@ -53,32 +53,31 @@
 }
 
 /* NAV */
-.profile-nav {
+.home-nav {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.home-header .nav-btn {
+.nav-btn {
   background: transparent;
   border: 1px solid transparent;
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: 8px 14px;
+  border-radius: 999px;
   cursor: pointer;
   font-weight: 800;
   color: var(--ink);
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
-.home-header .nav-btn:hover {
-  background: rgba(190, 210, 85, 0.4);
-  color: var(--ink);
+.nav-btn:hover {
+  background: rgba(190, 210, 85, 0.35);
 }
 
-.home-header .nav-btn.active {
+.nav-btn.active {
   background: rgba(31, 90, 59, 0.12);
   color: var(--green);
-  border-color: rgba(31, 90, 59, 0.18);
+  border-color: rgba(31, 90, 59, 0.16);
 }
 
 /* LOGOUT */
@@ -89,6 +88,7 @@
   border-radius: 999px;
   cursor: pointer;
   font-weight: 700;
+  color: var(--ink);
   transition: background 0.18s ease, border-color 0.18s ease;
 }
 
@@ -150,10 +150,8 @@
   width: 200px;
   height: 200px;
   margin: 0 auto;
-
   display: grid;
   place-items: center;
-
   background: var(--card);
   border-radius: 999px;
   border: 12px solid rgba(31, 90, 59, 0.12);
@@ -337,6 +335,11 @@
     flex-wrap: wrap;
   }
 
+  .home-nav {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
   .home-content {
     padding: 28px 16px 36px;
   }
@@ -356,5 +359,10 @@
 
   .macro-row {
     grid-template-columns: 90px 1fr 40px;
+  }
+
+  .home-header .nav-btn,
+  .logout-btn {
+    font-size: 16px;
   }
 }

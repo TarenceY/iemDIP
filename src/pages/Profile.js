@@ -36,57 +36,42 @@ export default function Profile() {
       });
   }, [userId]);
 
-  function handleLogout() {
-    localStorage.removeItem("seefood_user_id");
-    localStorage.removeItem("seefood_username");
-    navigate("/login");
-  }
-
   return (
     <div className="profile-container">
+      {/* TOP NAVBAR */}
       <header className="profile-header">
         <div
           className="profile-brand"
           role="button"
           tabIndex={0}
           onClick={() => navigate("/home")}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") navigate("/home");
-          }}
         >
           <img src={seefoodLogo} alt="SeeFood logo" />
         </div>
 
         <nav className="profile-nav">
-          <button className="profile-nav-btn" onClick={() => navigate("/home")}>
+          <button className="nav-btn" onClick={() => navigate("/home")}>
             Home
           </button>
-          <button
-            className="profile-nav-btn"
-            onClick={() => navigate("/dashboard")}
-          >
+          <button className="nav-btn" onClick={() => navigate("/dashboard")}>
             Dashboard
           </button>
-          <button
-            className="profile-nav-btn"
-            onClick={() => navigate("/history")}
-          >
+          <button className="nav-btn" onClick={() => navigate("/history")}>
             History
           </button>
-          <button
-            className="profile-nav-btn active"
-            onClick={() => navigate("/profile")}
-          >
+          <button className="nav-btn active" onClick={() => navigate("/profile")}>
             Profile
           </button>
         </nav>
 
-        <button className="profile-logout-btn" onClick={handleLogout}>
+        <button className="nav-btn" onClick={() => navigate("/login")}>
           Log out
         </button>
       </header>
 
+      {/* MAIN CONTENT */}
       <main className="profile-content">
+        {/* HERO */}
         <section className="profile-hero">
           <div className="hero-left">
             <h1>Your Profile</h1>
@@ -102,48 +87,38 @@ export default function Profile() {
           </div>
         </section>
 
-        {loading && (
-          <div className="empty">
-            <div className="empty-title">Loading profile…</div>
-          </div>
-        )}
-
-        {error && (
-          <div className="empty">
-            <div className="empty-title" style={{ color: "red" }}>
-              {error}
-            </div>
-          </div>
-        )}
+        {loading && <div className="empty"><div className="empty-title">Loading profile…</div></div>}
+        {error && <div className="empty"><div className="empty-title" style={{ color: "red" }}>{error}</div></div>}
 
         {profile && (
           <section className="profile-grid">
+            {/* BASIC INFO SUMMARY */}
             <div className="panel">
               <div className="panel-head">
                 <h2>Basic information</h2>
                 <span className="pill">Summary</span>
               </div>
 
-              <div className="summary-grid">
-                <div className="summary-item">
-                  <div className="summary-label">Username</div>
-                  <div className="summary-value">{profile.username || "—"}</div>
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <div className="summary-label">Username</div>
+                    <div className="summary-value">{profile.username || "—"}</div>
                 </div>
 
                 <div className="summary-item">
                   <div className="summary-label">Email</div>
                   <div className="summary-value">{profile.email || "—"}</div>
-                </div>
+                  </div>
 
-                <div className="summary-item">
-                  <div className="summary-label">Age</div>
-                  <div className="summary-value">{profile.age ?? "—"}</div>
-                </div>
+                  <div className="summary-item">
+                    <div className="summary-label">Age</div>
+                    <div className="summary-value">{profile.age ?? "—"}</div>
+                  </div>
 
-                <div className="summary-item">
-                  <div className="summary-label">Gender</div>
-                  <div className="summary-value">{profile.gender || "—"}</div>
-                </div>
+                  <div className="summary-item">
+                    <div className="summary-label">Gender</div>
+                    <div className="summary-value">{profile.gender || "—"}</div>
+                  </div>
 
                 <div className="summary-item">
                   <div className="summary-label">Goals</div>
@@ -172,6 +147,7 @@ export default function Profile() {
               </div>
             </div>
 
+            {/* ACCOUNT SECTION */}
             <div className="panel">
               <div className="panel-head">
                 <h2>Account</h2>

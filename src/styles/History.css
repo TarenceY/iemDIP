@@ -1,105 +1,5 @@
-:root {
-  --bg: #f6f2e9;
-  --card: #fbfaf7;
-  --ink: #1f2937;
-  --muted: #6b7280;
-  --border: #e7e1d6;
-  --green: #1f5a3b;
-  --green2: #2f7a52;
-  --green3: #bed255;
-  --panel: #dfeaa6;
-  --shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
-}
-
-.history-container {
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-.history-content {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 50px 8%;
-}
-
-/* NAVBAR */
-.history-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-
-  padding: 14px 32px;
-  background: rgba(251, 250, 247, 0.82);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-}
-
-.history-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 900;
-  font-size: 20px;
-  color: var(--green);
-  cursor: pointer;
-  user-select: none;
-}
-
-.history-brand img {
-  height: 34px;
-  width: auto;
-  object-fit: contain;
-}
-
-.history-nav {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.history-nav-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 800;
-  color: var(--ink);
-  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
-}
-
-.history-nav-btn:hover {
-  background: rgba(190, 210, 85, 0.35);
-}
-
-.history-nav-btn.active {
-  background: rgba(31, 90, 59, 0.12);
-  color: var(--green);
-  border-color: rgba(31, 90, 59, 0.16);
-}
-
-.history-logout-btn {
-  background: transparent;
-  border: 1px solid #d1d5db;
-  padding: 8px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 700;
-  color: var(--ink);
-  transition: background 0.18s ease, border-color 0.18s ease;
-}
-
-.history-logout-btn:hover {
-  background: rgba(190, 210, 85, 0.35);
-  border-color: rgba(31, 90, 59, 0.14);
-}
+/* src/styles/History.css */
+/* History styled to match Dashboard.css */
 
 /* HERO */
 .history-hero {
@@ -161,6 +61,7 @@
   flex-wrap: wrap;
 }
 
+/* Filter chips aligned to theme */
 .chip {
   background: transparent;
   border: 1px solid transparent;
@@ -224,6 +125,13 @@
   gap: 18px;
 }
 
+@media (max-width: 980px) {
+  .history-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CARD */
 .history-card {
   text-align: left;
   background: var(--card);
@@ -321,7 +229,7 @@
   color: var(--muted);
 }
 
-/* ACTIONS */
+/* ACTIONS (same as Dashboard button vibe) */
 .card-actions {
   display: flex;
   justify-content: space-between;
@@ -395,31 +303,4 @@ button.ghost-btn:hover {
   font-weight: 800;
   font-size: 13px;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
-}
-
-@media (max-width: 980px) {
-  .history-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .history-header {
-    padding: 12px 18px;
-    flex-wrap: wrap;
-  }
-
-  .history-nav {
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .history-content {
-    padding: 28px 16px 36px;
-  }
-
-  .history-nav-btn,
-  .history-logout-btn {
-    font-size: 16px;
-  }
 }

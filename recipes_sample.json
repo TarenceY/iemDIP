@@ -3,6 +3,14 @@
     "id": "grilled_chicken_salad",
     "name": "Grilled Chicken Salad",
     "ingredients": ["chicken breast", "lettuce", "tomato", "cucumber", "olive oil", "lemon"],
+    "ingredient_requirements": [
+      {"name": "chicken breast", "quantity": 200, "unit": "g"},
+      {"name": "lettuce", "quantity": 100, "unit": "g"},
+      {"name": "tomato", "quantity": 150, "unit": "g"},
+      {"name": "cucumber", "quantity": 100, "unit": "g"},
+      {"name": "olive oil", "quantity": 15, "unit": "ml"},
+      {"name": "lemon", "quantity": 1, "unit": "piece"}
+    ],
     "nutrition": {
       "calories": 350,
       "protein_g": 35,
@@ -25,6 +33,15 @@
     "id": "vegetable_stir_fry",
     "name": "Vegetable Stir Fry",
     "ingredients": ["broccoli", "bell pepper", "onion", "soy sauce", "garlic", "ginger", "sesame oil"],
+    "ingredient_requirements": [
+      {"name": "broccoli", "quantity": 250, "unit": "g"},
+      {"name": "bell pepper", "quantity": 150, "unit": "g"},
+      {"name": "onion", "quantity": 75, "unit": "g"},
+      {"name": "soy sauce", "quantity": 30, "unit": "ml"},
+      {"name": "garlic", "quantity": 10, "unit": "g"},
+      {"name": "ginger", "quantity": 10, "unit": "g"},
+      {"name": "sesame oil", "quantity": 15, "unit": "ml"}
+    ],
     "nutrition": {
       "calories": 280,
       "protein_g": 8,
@@ -47,6 +64,14 @@
     "id": "quinoa_bowl",
     "name": "Quinoa Buddha Bowl",
     "ingredients": ["quinoa", "chickpeas", "sweet potato", "kale", "tahini", "lemon"],
+    "ingredient_requirements": [
+      {"name": "quinoa", "quantity": 100, "unit": "g"},
+      {"name": "chickpeas", "quantity": 150, "unit": "g"},
+      {"name": "sweet potato", "quantity": 150, "unit": "g"},
+      {"name": "kale", "quantity": 100, "unit": "g"},
+      {"name": "tahini", "quantity": 30, "unit": "ml"},
+      {"name": "lemon", "quantity": 1, "unit": "piece"}
+    ],
     "nutrition": {
       "calories": 420,
       "protein_g": 15,
@@ -69,6 +94,14 @@
     "id": "salmon_fillet",
     "name": "Baked Salmon with Asparagus",
     "ingredients": ["salmon", "asparagus", "olive oil", "lemon", "garlic", "herbs"],
+    "ingredient_requirements": [
+      {"name": "salmon", "quantity": 200, "unit": "g"},
+      {"name": "asparagus", "quantity": 200, "unit": "g"},
+      {"name": "olive oil", "quantity": 15, "unit": "ml"},
+      {"name": "lemon", "quantity": 0.5, "unit": "piece"},
+      {"name": "garlic", "quantity": 10, "unit": "g"},
+      {"name": "herbs", "quantity": 5, "unit": "g"}
+    ],
     "nutrition": {
       "calories": 380,
       "protein_g": 40,
@@ -91,6 +124,15 @@
     "id": "sweet_potato_curry",
     "name": "Sweet Potato and Lentil Curry",
     "ingredients": ["sweet potato", "lentils", "coconut milk", "curry spices", "onion", "garlic", "tomato"],
+    "ingredient_requirements": [
+      {"name": "sweet potato", "quantity": 300, "unit": "g"},
+      {"name": "lentils", "quantity": 150, "unit": "g"},
+      {"name": "coconut milk", "quantity": 200, "unit": "ml"},
+      {"name": "curry spices", "quantity": 5, "unit": "g"},
+      {"name": "onion", "quantity": 75, "unit": "g"},
+      {"name": "garlic", "quantity": 15, "unit": "g"},
+      {"name": "tomato", "quantity": 150, "unit": "g"}
+    ],
     "nutrition": {
       "calories": 340,
       "protein_g": 12,
@@ -113,6 +155,13 @@
     "id": "greek_yogurt_parfait",
     "name": "Greek Yogurt Parfait with Berries",
     "ingredients": ["greek yogurt", "berries", "granola", "honey", "almonds"],
+    "ingredient_requirements": [
+      {"name": "greek yogurt", "quantity": 200, "unit": "g"},
+      {"name": "berries", "quantity": 150, "unit": "g"},
+      {"name": "granola", "quantity": 40, "unit": "g"},
+      {"name": "honey", "quantity": 20, "unit": "ml"},
+      {"name": "almonds", "quantity": 30, "unit": "g"}
+    ],
     "nutrition": {
       "calories": 280,
       "protein_g": 18,
@@ -135,6 +184,15 @@
     "id": "black_bean_tacos",
     "name": "Black Bean Tacos",
     "ingredients": ["black beans", "taco shells", "lettuce", "tomato", "avocado", "salsa", "lime"],
+    "ingredient_requirements": [
+      {"name": "black beans", "quantity": 200, "unit": "g"},
+      {"name": "taco shells", "quantity": 4, "unit": "piece"},
+      {"name": "lettuce", "quantity": 75, "unit": "g"},
+      {"name": "tomato", "quantity": 100, "unit": "g"},
+      {"name": "avocado", "quantity": 150, "unit": "g"},
+      {"name": "salsa", "quantity": 50, "unit": "ml"},
+      {"name": "lime", "quantity": 1, "unit": "piece"}
+    ],
     "nutrition": {
       "calories": 320,
       "protein_g": 12,
@@ -157,6 +215,14 @@
     "id": "chicken_breast_pasta",
     "name": "Grilled Chicken Whole Wheat Pasta",
     "ingredients": ["whole wheat pasta", "chicken breast", "tomato", "garlic", "basil", "olive oil"],
+    "ingredient_requirements": [
+      {"name": "whole wheat pasta", "quantity": 150, "unit": "g"},
+      {"name": "chicken breast", "quantity": 200, "unit": "g"},
+      {"name": "tomato", "quantity": 150, "unit": "g"},
+      {"name": "garlic", "quantity": 10, "unit": "g"},
+      {"name": "basil", "quantity": 5, "unit": "g"},
+      {"name": "olive oil", "quantity": 15, "unit": "ml"}
+    ],
     "nutrition": {
       "calories": 480,
       "protein_g": 38,
@@ -179,6 +245,13 @@
     "id": "smoothie_protein",
     "name": "Protein Smoothie",
     "ingredients": ["banana", "protein powder", "almond milk", "almond butter", "berries"],
+    "ingredient_requirements": [
+      {"name": "banana", "quantity": 120, "unit": "g"},
+      {"name": "protein powder", "quantity": 30, "unit": "g"},
+      {"name": "almond milk", "quantity": 240, "unit": "ml"},
+      {"name": "almond butter", "quantity": 15, "unit": "ml"},
+      {"name": "berries", "quantity": 100, "unit": "g"}
+    ],
     "nutrition": {
       "calories": 250,
       "protein_g": 25,
@@ -201,6 +274,15 @@
     "id": "tuna_salad_wrap",
     "name": "Tuna Salad Whole Wheat Wrap",
     "ingredients": ["canned tuna", "whole wheat wrap", "lettuce", "tomato", "cucumber", "mayo", "lemon"],
+    "ingredient_requirements": [
+      {"name": "canned tuna", "quantity": 150, "unit": "g"},
+      {"name": "whole wheat wrap", "quantity": 1, "unit": "piece"},
+      {"name": "lettuce", "quantity": 50, "unit": "g"},
+      {"name": "tomato", "quantity": 75, "unit": "g"},
+      {"name": "cucumber", "quantity": 75, "unit": "g"},
+      {"name": "mayo", "quantity": 30, "unit": "ml"},
+      {"name": "lemon", "quantity": 0.5, "unit": "piece"}
+    ],
     "nutrition": {
       "calories": 320,
       "protein_g": 30,

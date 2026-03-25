@@ -88,37 +88,43 @@ class RecipeAnalyzer:
     
     def find_recipes_by_ingredients(
         self,
-        ingredients: List[str],
+        ingredients: IngredientList,
         match_percentage: Optional[float] = None,
         include_full_instructions: bool = False,
     ) -> List[RecipeRecommendation]:
         """
-        Find recipes that use provided ingredients.
+        Find recipes that can be made with provided ingredients and their quantities.
         
         Args:
-            ingredients: List of ingredient names
+            ingredients: IngredientList with detected ingredients and quantities
             match_percentage: Override default match percentage (0.0-1.0)
             include_full_instructions: Include full recipe instructions in output
             
         Returns:
             Ranked list of recipe recommendations
         """
-        match_pct = match_percentage or self.default_ingredient_match
+        # Build available ingredients dict with quantities
+        available_ingredients = {}
+        available_units = {}
+        for ing in ingredients.ingredients:
+            available_ingredients[ing.name] = ing.quantity_value or 0
+            available_units[ing.name] = ing.unit or "g"
         
-        filter_criteria = RecipeFilter(
-            ingredients=ingredients,
-            ingredient_match_percentage=match_pct,
+        # Find recipes that can be made with available ingredients
+        matching_recipes = self.db.search_by_ingredients(
+            available_ingredients,
+            available_units,
         )
         
-        matching_recipes = self.db.search(filter_criteria)
         recommendations = []
+        ingredient_names = [ing.name for ing in ingredients.ingredients]
         
         for recipe in matching_recipes:
             # Calculate ingredient match score
-            ingredient_set = set(ing.lower() for ing in ingredients)
+            ingredient_set = set(ing.lower() for ing in ingredient_names)
             recipe_set = set(ing.lower() for ing in recipe.ingredients)
             matches = len(ingredient_set.intersection(recipe_set))
-            score = matches / len(ingredient_set) if ingredient_set else 0.0
+            score = matches / len(recipe_set) if recipe_set else 0.0
             
             recommendation = RecipeRecommendation(
                 recipe=recipe,
@@ -131,7 +137,7 @@ class RecipeAnalyzer:
         # Sort by score
         recommendations.sort(key=lambda x: x.overall_score, reverse=True)
         
-        logger.info(f"Found {len(recommendations)} recipes for {len(ingredients)} ingredients")
+        logger.info(f"Found {len(recommendations)} feasible recipes from {len(ingredient_names)} ingredients")
         return recommendations
     
     def find_recipes_by_nutrition(
@@ -155,20 +161,16 @@ class RecipeAnalyzer:
         Returns:
             List of matching recipes
         """
-        filter_criteria = RecipeFilter(
+        return self.db.search_by_nutrition(
             calories=calories,
             protein_g=protein_g,
             carbohydrates_g=carbohydrates_g,
             fat_g=fat_g,
         )
-        
-        matching_recipes = self.db.search(filter_criteria)
-        logger.info(f"Found {len(matching_recipes)} recipes matching nutrition criteria")
-        return matching_recipes
     
     def find_recipes_by_ingredients_and_nutrition(
         self,
-        ingredients: List[str],
+        ingredients: IngredientList,
         calories: Optional[NutritionRange] = None,
         protein_g: Optional[NutritionRange] = None,
         carbohydrates_g: Optional[NutritionRange] = None,
@@ -177,12 +179,12 @@ class RecipeAnalyzer:
         include_full_instructions: bool = False,
     ) -> List[RecipeRecommendation]:
         """
-        Find recipes matching both ingredients and nutrition criteria.
+        Find recipes matching both available ingredients (with quantities) and nutrition criteria.
         
-        Combined search with scoring.
+        Prioritizes recipes that can actually be made with available ingredient amounts.
         
         Args:
-            ingredients: List of ingredient names
+            ingredients: IngredientList with detected ingredients and quantities
             calories: Calorie range
             protein_g: Protein range
             carbohydrates_g: Carbohydrates range
@@ -193,27 +195,37 @@ class RecipeAnalyzer:
         Returns:
             Ranked list of recipe recommendations
         """
-        match_pct = match_percentage or self.default_ingredient_match
+        # Build available ingredients dict with quantities
+        available_ingredients = {}
+        available_units = {}
+        for ing in ingredients.ingredients:
+            available_ingredients[ing.name] = ing.quantity_value or 0
+            available_units[ing.name] = ing.unit or "g"
         
-        # Create filter with both ingredients and nutrition
-        filter_criteria = RecipeFilter(
-            ingredients=ingredients,
-            ingredient_match_percentage=match_pct,
+        # Create nutrition filter
+        nutrition_filter = RecipeFilter(
             calories=calories,
             protein_g=protein_g,
             carbohydrates_g=carbohydrates_g,
             fat_g=fat_g,
         )
         
-        matching_recipes = self.db.search(filter_criteria)
+        # Find compatible recipes (by ingredients AND nutrition)
+        matching_recipes = self.db.search_compatible(
+            available_ingredients,
+            available_units,
+            nutrition_filter,
+        )
+        
         recommendations = []
+        ingredient_names = [ing.name for ing in ingredients.ingredients]
         
         for recipe in matching_recipes:
             # Calculate ingredient match score
-            ingredient_set = set(ing.lower() for ing in ingredients)
+            ingredient_set = set(ing.lower() for ing in ingredient_names)
             recipe_set = set(ing.lower() for ing in recipe.ingredients)
             matches = len(ingredient_set.intersection(recipe_set))
-            ingredient_score = matches / len(ingredient_set) if ingredient_set else 0.0
+            ingredient_score = matches / len(recipe_set) if recipe_set else 0.0
             
             # Calculate nutrition match score (simple: 0.8 for matching all criteria)
             nutrition_score = 0.8
@@ -239,6 +251,7 @@ class RecipeAnalyzer:
     def analyze_and_recommend(
         self,
         image_path: str,
+        cv_metadata: Optional[dict] = None,
         calories: Optional[NutritionRange] = None,
         protein_g: Optional[NutritionRange] = None,
         carbohydrates_g: Optional[NutritionRange] = None,
@@ -247,10 +260,17 @@ class RecipeAnalyzer:
         limit: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
-        Complete workflow: Extract ingredients from image and find matching recipes.
+        Complete workflow: Extract ingredients from image and find feasible recipes.
+        
+        Uses ArUco measurements for precise ingredient quantities to ensure
+        returned recipes can actually be made with available ingredients.
         
         Args:
-            image_path: Path to food image
+            image_path: Path to ingredient image
+            cv_metadata: Optional CV analysis results with ArUco scale info
+                - 'aruco_scale_cm_per_pixel': float
+                - 'detected_aruco_markers': list of marker IDs
+                - 'image_metadata': dict with image dimensions
             calories: Calorie range filter
             protein_g: Protein range filter
             carbohydrates_g: Carbs range filter
@@ -259,19 +279,20 @@ class RecipeAnalyzer:
             limit: Maximum number of recommendations to return
             
         Returns:
-            Dict with ingredients and recipe recommendations
+            Dict with extracted ingredients and recipe recommendations
         """
         try:
-            logger.info(f"Starting complete analysis for: {image_path}")
+            logger.info(f"Starting meal planning analysis for: {image_path}")
             
-            # Step 1: Extract ingredients
-            ingredient_list = self.analyze_image(image_path)
+            # Step 1: Extract ingredients with measured quantities using CV metadata
+            ingredient_list = self.ingredient_extractor.extract_from_file(
+                image_path,
+                cv_metadata=cv_metadata
+            )
             
-            # Step 2: Find matching recipes
-            ingredients = ingredient_list.get_ingredient_names()
-            
+            # Step 2: Find feasible recipes (can actually be made with available amounts)
             recommendations = self.find_recipes_by_ingredients_and_nutrition(
-                ingredients=ingredients,
+                ingredients=ingredient_list,
                 calories=calories,
                 protein_g=protein_g,
                 carbohydrates_g=carbohydrates_g,
@@ -291,7 +312,7 @@ class RecipeAnalyzer:
             }
             
         except Exception as e:
-            logger.error(f"Complete analysis failed: {e}")
+            logger.error(f"Meal planning analysis failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

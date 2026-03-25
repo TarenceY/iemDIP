@@ -228,7 +228,21 @@ class FoodNutritionPipeline:
                 "fat_g": result.total_fat_g
             },
             "analysis_notes": result.analysis_notes,
-            "backend_data": result.to_backend_data()
+            "backend_data": {
+                "items": [
+                    {
+                        "food_name": item.food_name,
+                        "calories": item.calories,
+                        "carbs": item.carbohydrates_g,
+                        "protein": item.protein_g,
+                        "fats": item.fat_g,
+                        "fiber": item.fiber_g,
+                        "sodium": item.sodium_mg,
+                        "notes": item.notes,
+                    }
+                    for item in result.food_items
+                ]
+            }
         }
     
     def get_cv_only(self, image_path: str) -> CVResult:

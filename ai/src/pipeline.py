@@ -45,7 +45,7 @@ class FoodNutritionPipeline:
     def __init__(
         self,
         gemini_api_key: Optional[str] = None,
-        gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
+        gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
         aruco_marker_size_cm: float = 5.0,
         yolo_model_path: str = "yolov8n.pt",
         confidence_threshold: float = 0.5,

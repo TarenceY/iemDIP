@@ -268,6 +268,151 @@ def create_app(
             logger.error(f"Ingredient analysis failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.post("/api/extract-ingredients")
+    async def extract_ingredients(image: UploadFile = File(...)):
+        """
+        Extract ingredients from an ingredient image with ArUco-based measurements.
+        
+        - **image**: Image of ingredients file (jpg, png, webp)
+        
+        Returns detected ingredients with measured quantities (e.g., "10g lettuce").
+        """
+        allowed_types = ["image/jpeg", "image/png", "image/webp"]
+        if image.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed: {allowed_types}"
+            )
+        
+        try:
+            # Save uploaded image temporarily
+            with tempfile.NamedTemporaryFile(
+                suffix=Path(image.filename).suffix,
+                delete=False
+            ) as tmp:
+                content = await image.read()
+                tmp.write(content)
+                tmp_path = tmp.name
+            
+            # Get CV metadata with ArUco scale
+            pipe = get_pipeline()
+            cv_result = pipe.get_cv_only(tmp_path)
+            cv_metadata = cv_result.metadata_text if cv_result else None
+            
+            # Extract ingredients with CV metadata
+            ingredients = pipe.extract_ingredients(tmp_path, cv_metadata)
+            
+            # Clean up temp file
+            Path(tmp_path).unlink(missing_ok=True)
+            
+            return {
+                "success": True,
+                "timestamp": datetime.utcnow().isoformat(),
+                "ingredients": [
+                    {
+                        "name": ing.name,
+                        "quantity_value": ing.quantity_value,
+                        "unit": ing.unit,
+                        "confidence": ing.confidence,
+                        "measurement_method": ing.measurement_method
+                    }
+                    for ing in ingredients.ingredients
+                ],
+                "analysis_summary": ingredients.analysis_summary,
+                "total_weight_estimate_g": ingredients.total_weight_estimate_g,
+                "aruco_scale_info": ingredients.aruco_scale_info
+            }
+            
+        except Exception as e:
+            logger.error(f"Ingredient extraction failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @app.post("/api/analyze-and-recommend")
+    async def analyze_and_recommend(
+        image: UploadFile = File(...),
+        calorie_min: Optional[float] = Form(None),
+        calorie_max: Optional[float] = Form(None),
+        protein_min_g: Optional[float] = Form(None),
+        protein_max_g: Optional[float] = Form(None),
+        carbs_min_g: Optional[float] = Form(None),
+        carbs_max_g: Optional[float] = Form(None),
+        fat_min_g: Optional[float] = Form(None),
+        fat_max_g: Optional[float] = Form(None)
+    ):
+        """
+        Analyze ingredient image and recommend recipes based on available ingredients + nutrition needs.
+        
+        This is the main meal planning endpoint that:
+        1. Extracts ingredients from image with ArUco-based measurements
+        2. Checks ingredient sufficiency for recipes
+        3. Filters recipes by nutrition requirements
+        4. Returns ranked recipe recommendations
+        
+        - **image**: Image of ingredients file (jpg, png, webp)
+        - **calorie_min/max**: Target calorie range
+        - **protein_min/max_g**: Target protein range in grams
+        - **carbs_min/max_g**: Target carbohydrate range in grams
+        - **fat_min/max_g**: Target fat range in grams
+        
+        Returns:
+        - extracted_ingredients: List of detected ingredients with quantities
+        - recipe_recommendations: Ranked recipes matching ingredients and nutrition targets
+        """
+        allowed_types = ["image/jpeg", "image/png", "image/webp"]
+        if image.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed: {allowed_types}"
+            )
+        
+        try:
+            # Save uploaded image temporarily
+            with tempfile.NamedTemporaryFile(
+                suffix=Path(image.filename).suffix,
+                delete=False
+            ) as tmp:
+                content = await image.read()
+                tmp.write(content)
+                tmp_path = tmp.name
+            
+            # Run complete meal planning analysis
+            pipe = get_pipeline()
+            result = pipe.analyze_and_recommend_recipes(
+                image_path=tmp_path,
+                calorie_min=calorie_min,
+                calorie_max=calorie_max,
+                protein_min_g=protein_min_g,
+                protein_max_g=protein_max_g,
+                carbs_min_g=carbs_min_g,
+                carbs_max_g=carbs_max_g,
+                fat_min_g=fat_min_g,
+                fat_max_g=fat_max_g
+            )
+            
+            # Clean up temp file
+            Path(tmp_path).unlink(missing_ok=True)
+            
+            if result["success"]:
+                return {
+                    "success": True,
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "extracted_ingredients": result.get("extracted_ingredients", []),
+                    "ingredient_analysis_summary": result.get("ingredient_analysis_summary", ""),
+                    "total_weight_estimate_g": result.get("total_weight_estimate_g", 0),
+                    "recipe_recommendations": result.get("recipe_recommendations", [])
+                }
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail=result.get("error", "Analysis failed")
+                )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Meal planning analysis failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
     @app.get("/api/generate-aruco/{marker_id}")
     async def generate_aruco_marker(
         marker_id: int = 0,

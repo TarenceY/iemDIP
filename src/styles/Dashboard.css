@@ -1,0 +1,375 @@
+/* src/styles/Dashboard.css */
+/* Dashboard styled to match Home.css theme */
+
+/* HERO (make it feel like Home panels/cards) */
+.dash-hero {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 22px;
+}
+
+.dash-hero h1 {
+  margin: 0 0 8px;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--green);
+}
+
+.dash-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* GRID */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 900px) {
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* PANELS */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--green);
+  letter-spacing: 0.01em;
+}
+
+/* Pills/chips should match warm theme */
+.pill {
+  background: rgba(31, 90, 59, 0.08);
+  border: 1px solid rgba(31, 90, 59, 0.14);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 900;
+}
+
+/* OVERVIEW STATS */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.stat {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(31, 90, 59, 0.06);
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 900;
+  margin-bottom: 4px;
+  color: var(--green);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+/* Note callout (Home-ish highlight) */
+.panel-note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #dfeb9f;
+  border: 1px solid var(--border);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* GROCERY ADD */
+.add-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.text-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 10px 14px;
+  outline: none;
+  color: var(--ink);
+}
+
+.text-input::placeholder {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.text-input:focus {
+  border-color: rgba(31, 90, 59, 0.35);
+  box-shadow: 0 0 0 3px rgba(31, 90, 59, 0.15);
+}
+
+/* Buttons (match Home primary/ghost styles) */
+.primary-btn,
+.ghost-btn {
+  padding: 12px 20px;
+  font-weight: 700;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.primary-btn {
+  border: none;
+  background: var(--green);
+  color: white;
+  text-align: center;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.primary-btn:hover {
+  background: var(--green3);
+  color: var(--ink);
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 2px solid var(--green);
+  color: var(--green);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+button.ghost-btn:hover {
+  background-color: var(--green3);
+  color: var(--ink);
+}
+
+/* LIST */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 340px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.list-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 10px 12px;
+  background: var(--card);
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.05);
+}
+
+/* CHECKBOX */
+.check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.check input {
+  display: none;
+}
+
+.check-ui {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid rgba(31, 90, 59, 0.25);
+  display: inline-block;
+  position: relative;
+  background: #fff;
+}
+
+.check input:checked + .check-ui {
+  border-color: var(--green);
+  background: rgba(31, 90, 59, 0.12);
+}
+
+.check input:checked + .check-ui::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--green);
+  font-weight: 900;
+  font-size: 14px;
+}
+
+/* ITEM TEXT */
+.item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-name {
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.item-name.done {
+  text-decoration: line-through;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.item-meta {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* ICON BUTTON */
+.icon-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.icon-btn:hover {
+  background: var(--green3);
+  color: var(--ink);
+}
+
+/* LATELY */
+.lately {
+  margin-top: 6px;
+}
+
+.lately-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 980px) {
+  .lately-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.meal-card {
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.meal-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.meal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.meal-day {
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.meal-chip {
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 90, 59, 0.18);
+  background: rgba(31, 90, 59, 0.08);
+  color: var(--green);
+}
+
+.meal-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.meal-desc {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.meal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Link button -> Home-ish */
+.link-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 900;
+  color: var(--green);
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.link-btn:hover {
+  background: rgba(31, 90, 59, 0.10);
+}

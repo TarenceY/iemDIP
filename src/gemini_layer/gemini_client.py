@@ -48,6 +48,14 @@ class NutritionResult:
     total_fat_g: float
     analysis_notes: str
     raw_response: str
+    
+    def to_backend_data(self) -> str:
+        """Convert result to backend-compatible format.
+        
+        Returns:
+            The raw Gemini API response as the backend data.
+        """
+        return self.raw_response
 
 
 class GeminiNutritionAnalyzer:

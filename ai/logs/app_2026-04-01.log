@@ -1,0 +1,6 @@
+2026-04-01 13:38:42.045 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-01 13:38:45.594 | WARNING  | src.gemini_layer.gemini_client:<module>:22 - google-genai not installed. Install with: pip install google-genai
+2026-04-01 14:11:27.218 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-01 14:11:29.024 | WARNING  | src.gemini_layer.gemini_client:<module>:22 - google-genai not installed. Install with: pip install google-genai
+2026-04-01 14:24:40.323 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-01 14:24:42.279 | WARNING  | src.gemini_layer.gemini_client:<module>:22 - google-genai not installed. Install with: pip install google-genai

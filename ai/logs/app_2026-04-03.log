@@ -1,0 +1,104 @@
+2026-04-03 17:32:23.257 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-03 17:32:26.282 | WARNING  | src.gemini_layer.gemini_client:<module>:22 - google-genai not installed. Install with: pip install google-genai
+2026-04-03 17:34:52.033 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-03 17:34:52.033 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-03 17:34:52.034 | ERROR    | src.api.routes:analyze_food:195 - Analysis failed: google-genai package not installed
+2026-04-03 17:36:09.000 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-03 17:36:35.922 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-03 17:36:35.923 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-03 17:36:36.053 | INFO     | src.gemini_layer.gemini_client:__init__:123 - Gemini analyzer initialized with model: gemini-2.5-flash
+2026-04-03 17:36:36.077 | INFO     | src.recipe_layer.recipe_database:load_from_json:306 - Successfully loaded 10 recipes
+2026-04-03 17:36:36.078 | INFO     | src.recipe_layer.recipe_database:__init__:291 - Loaded 10 recipes from /mnt/c/Users/yised/OneDrive/Desktop/ai_model/iemDIP/recipes_sample.json
+2026-04-03 17:36:36.079 | INFO     | src.recipe_layer.ingredient_extractor:__init__:131 - Ingredient extractor initialized with gemini-2.0-flash
+2026-04-03 17:36:36.079 | INFO     | src.recipe_layer.recipe_analyzer:__init__:70 - Recipe Analyzer initialized
+2026-04-03 17:36:36.080 | INFO     | src.pipeline:__init__:91 - Food Nutrition Pipeline initialized with Recipe Layer
+2026-04-03 17:36:36.080 | INFO     | src.pipeline:analyze:111 - Processing image: /tmp/tmplz7olwt8.jpg
+2026-04-03 17:36:36.080 | INFO     | src.pipeline:analyze:114 - Running CV pipeline...
+2026-04-03 17:36:36.341 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-03 17:36:36.343 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-03 17:36:45.282 | INFO     | src.cv_layer.food_detector:load_model:69 - Loaded custom YOLO model from yolov8n.pt
+2026-04-03 17:36:45.518 | INFO     | src.cv_layer.food_detector:load_model:80 - YOLO model ready on device: cuda
+2026-04-03 17:36:47.763 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 0 objects
+2026-04-03 17:36:47.768 | INFO     | src.pipeline:analyze:118 - Running Gemini analysis...
+2026-04-03 17:36:47.909 | ERROR    | src.gemini_layer.gemini_client:analyze_from_bytes:168 - Gemini analysis failed: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}
+2026-04-03 17:36:47.910 | ERROR    | src.pipeline:analyze:149 - Pipeline failed: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}
+2026-04-03 17:44:25.158 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-03 17:44:56.966 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-03 17:44:56.966 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-03 17:44:57.071 | INFO     | src.gemini_layer.gemini_client:__init__:123 - Gemini analyzer initialized with model: gemini-2.5-flash
+2026-04-03 17:44:57.078 | INFO     | src.recipe_layer.recipe_database:load_from_json:306 - Successfully loaded 10 recipes
+2026-04-03 17:44:57.078 | INFO     | src.recipe_layer.recipe_database:__init__:291 - Loaded 10 recipes from /mnt/c/Users/yised/OneDrive/Desktop/ai_model/iemDIP/recipes_sample.json
+2026-04-03 17:44:57.079 | INFO     | src.recipe_layer.ingredient_extractor:__init__:131 - Ingredient extractor initialized with gemini-2.0-flash
+2026-04-03 17:44:57.080 | INFO     | src.recipe_layer.recipe_analyzer:__init__:70 - Recipe Analyzer initialized
+2026-04-03 17:44:57.080 | INFO     | src.pipeline:__init__:91 - Food Nutrition Pipeline initialized with Recipe Layer
+2026-04-03 17:44:57.081 | INFO     | src.pipeline:analyze:111 - Processing image: /tmp/tmp4zesnjle.jpg
+2026-04-03 17:44:57.081 | INFO     | src.pipeline:analyze:114 - Running CV pipeline...
+2026-04-03 17:44:57.174 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-03 17:44:57.175 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-03 17:45:05.307 | INFO     | src.cv_layer.food_detector:load_model:69 - Loaded custom YOLO model from yolov8n.pt
+2026-04-03 17:45:05.529 | INFO     | src.cv_layer.food_detector:load_model:80 - YOLO model ready on device: cuda
+2026-04-03 17:45:17.329 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 0 objects
+2026-04-03 17:45:17.335 | INFO     | src.pipeline:analyze:118 - Running Gemini analysis...
+2026-04-03 17:45:37.882 | INFO     | src.gemini_layer.gemini_client:analyze_from_bytes:164 - Nutrition analysis complete: 724 total calories
+2026-04-03 17:45:37.883 | ERROR    | src.pipeline:analyze:149 - Pipeline failed: 'NutritionResult' object has no attribute 'to_backend_data'
+2026-04-03 17:47:58.123 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-03 17:48:14.890 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-03 17:48:14.891 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-03 17:48:15.008 | INFO     | src.gemini_layer.gemini_client:__init__:131 - Gemini analyzer initialized with model: gemini-2.5-flash
+2026-04-03 17:48:15.014 | INFO     | src.recipe_layer.recipe_database:load_from_json:306 - Successfully loaded 10 recipes
+2026-04-03 17:48:15.014 | INFO     | src.recipe_layer.recipe_database:__init__:291 - Loaded 10 recipes from /mnt/c/Users/yised/OneDrive/Desktop/ai_model/iemDIP/recipes_sample.json
+2026-04-03 17:48:15.015 | INFO     | src.recipe_layer.ingredient_extractor:__init__:131 - Ingredient extractor initialized with gemini-2.0-flash
+2026-04-03 17:48:15.015 | INFO     | src.recipe_layer.recipe_analyzer:__init__:70 - Recipe Analyzer initialized
+2026-04-03 17:48:15.016 | INFO     | src.pipeline:__init__:91 - Food Nutrition Pipeline initialized with Recipe Layer
+2026-04-03 17:48:15.016 | INFO     | src.pipeline:analyze:111 - Processing image: /tmp/tmpijzaveu0.jpg
+2026-04-03 17:48:15.016 | INFO     | src.pipeline:analyze:114 - Running CV pipeline...
+2026-04-03 17:48:15.181 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-03 17:48:15.182 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-03 17:48:31.714 | INFO     | src.cv_layer.food_detector:load_model:69 - Loaded custom YOLO model from yolov8n.pt
+2026-04-03 17:48:32.015 | INFO     | src.cv_layer.food_detector:load_model:80 - YOLO model ready on device: cuda
+2026-04-03 17:48:35.457 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 0 objects
+2026-04-03 17:48:35.472 | INFO     | src.pipeline:analyze:118 - Running Gemini analysis...
+2026-04-03 17:48:51.502 | INFO     | src.gemini_layer.gemini_client:analyze_from_bytes:172 - Nutrition analysis complete: 967 total calories
+2026-04-03 17:48:51.503 | INFO     | src.pipeline:analyze:145 - Analysis complete: 967 calories
+2026-04-03 18:08:26.904 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-03 18:29:37.517 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-03 18:40:50.846 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-03 18:47:25.183 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-03 18:47:25.202 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-03 18:47:25.623 | INFO     | src.gemini_layer.gemini_client:__init__:131 - Gemini analyzer initialized with model: gemini-2.5-flash
+2026-04-03 18:47:25.663 | INFO     | src.recipe_layer.recipe_database:load_from_json:306 - Successfully loaded 10 recipes
+2026-04-03 18:47:25.664 | INFO     | src.recipe_layer.recipe_database:__init__:291 - Loaded 10 recipes from /mnt/c/Users/yised/OneDrive/Desktop/ai_model/iemDIP/recipes_sample.json
+2026-04-03 18:47:25.671 | INFO     | src.recipe_layer.ingredient_extractor:__init__:131 - Ingredient extractor initialized with gemini-2.0-flash
+2026-04-03 18:47:25.671 | INFO     | src.recipe_layer.recipe_analyzer:__init__:70 - Recipe Analyzer initialized
+2026-04-03 18:47:25.672 | INFO     | src.pipeline:__init__:91 - Food Nutrition Pipeline initialized with Recipe Layer
+2026-04-03 18:47:25.674 | INFO     | src.pipeline:analyze:111 - Processing image: /tmp/tmpx8k5yo77.jpg
+2026-04-03 18:47:25.675 | INFO     | src.pipeline:analyze:114 - Running CV pipeline...
+2026-04-03 18:47:25.973 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-03 18:47:25.979 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-03 18:47:45.301 | INFO     | src.cv_layer.food_detector:load_model:69 - Loaded custom YOLO model from yolov8n.pt
+2026-04-03 18:47:45.663 | INFO     | src.cv_layer.food_detector:load_model:80 - YOLO model ready on device: cuda
+2026-04-03 18:47:52.392 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 0 objects
+2026-04-03 18:47:52.415 | INFO     | src.pipeline:analyze:118 - Running Gemini analysis...
+2026-04-03 18:48:21.290 | INFO     | src.gemini_layer.gemini_client:analyze_from_bytes:172 - Nutrition analysis complete: 812 total calories
+2026-04-03 18:48:21.325 | INFO     | src.pipeline:analyze:145 - Analysis complete: 812 calories
+2026-04-03 18:50:33.984 | INFO     | src.gemini_layer.gemini_client:__init__:297 - Gemini ingredient analyzer initialized with model: gemini-2.5-flash
+2026-04-03 18:50:43.360 | INFO     | src.gemini_layer.gemini_client:analyze_from_bytes:314 - Ingredient analysis complete: 4 ingredients detected
+2026-04-03 19:02:11.165 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-03 19:03:42.704 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-03 19:03:42.705 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-03 19:03:42.829 | INFO     | src.gemini_layer.gemini_client:__init__:131 - Gemini analyzer initialized with model: gemini-2.5-flash
+2026-04-03 19:03:42.837 | INFO     | src.recipe_layer.recipe_database:load_from_json:306 - Successfully loaded 10 recipes
+2026-04-03 19:03:42.838 | INFO     | src.recipe_layer.recipe_database:__init__:291 - Loaded 10 recipes from /mnt/c/Users/yised/OneDrive/Desktop/ai_model/iemDIP/recipes_sample.json
+2026-04-03 19:03:42.838 | INFO     | src.recipe_layer.ingredient_extractor:__init__:131 - Ingredient extractor initialized with gemini-2.0-flash
+2026-04-03 19:03:42.839 | INFO     | src.recipe_layer.recipe_analyzer:__init__:70 - Recipe Analyzer initialized
+2026-04-03 19:03:42.839 | INFO     | src.pipeline:__init__:91 - Food Nutrition Pipeline initialized with Recipe Layer
+2026-04-03 19:03:42.839 | INFO     | src.pipeline:analyze:111 - Processing image: /tmp/tmpsgohs2o9.jpg
+2026-04-03 19:03:42.840 | INFO     | src.pipeline:analyze:114 - Running CV pipeline...
+2026-04-03 19:03:42.977 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-03 19:03:42.978 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-03 19:03:59.965 | INFO     | src.cv_layer.food_detector:load_model:69 - Loaded custom YOLO model from yolov8n.pt
+2026-04-03 19:04:01.011 | INFO     | src.cv_layer.food_detector:load_model:80 - YOLO model ready on device: cuda
+2026-04-03 19:04:11.307 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 0 objects
+2026-04-03 19:04:11.407 | INFO     | src.pipeline:analyze:118 - Running Gemini analysis...
+2026-04-03 19:04:34.596 | INFO     | src.gemini_layer.gemini_client:analyze_from_bytes:172 - Nutrition analysis complete: 1158 total calories
+2026-04-03 19:04:34.740 | INFO     | src.pipeline:analyze:145 - Analysis complete: 1158 calories

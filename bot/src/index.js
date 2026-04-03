@@ -23,13 +23,19 @@ const bot = new TelegramBot(token, { polling: true });
 /**
  * In-memory session store.
  * Key: chatId (number)
- * Value: { state: string, pendingUsername?: string, userId?: string, username?: string }
+ * Value: { state: string, pendingUsername?: string, userId?: string, username?: string, mode?: string }
  *
  * States:
  *   "idle"              – not logged in, no active login flow
  *   "awaiting_username" – bot has asked the user for their username / email
  *   "awaiting_password" – bot has received username and is waiting for password
  *   "authenticated"     – user is logged in
+ *   "awaiting_photo_createMeal"  – user selected /createMeal, waiting for ingredients photo
+ *   "awaiting_photo_analyseNutrition" – user selected /analyseNutrition, waiting for meal photo
+ *
+ * Mode:
+ *   "createMeal"       – extract ingredients and recommend recipes
+ *   "analyseNutrition" – analyze nutrition of the meal
  *
  * Note: Sessions are stored in memory and will be cleared on bot restart.
  * Users will need to log in again after a restart.
@@ -45,7 +51,9 @@ function getSession(chatId) {
 
 function isAuthenticated(chatId) {
   const session = sessions.get(chatId);
-  return session && session.state === "authenticated";
+  // User is authenticated if they have logged in (have userId and username)
+  // This remains true even if they're in awaiting_photo states
+  return session && session.userId && session.username;
 }
 
 // /start command
@@ -55,11 +63,16 @@ bot.onText(/\/start/, (msg) => {
 
   if (session.state === "authenticated") {
     bot.sendMessage(chatId,
-      `Welcome back, ${session.username}! Send me a photo of your meal with the calibration card, or use /logout to sign out.`
+      `Welcome back, ${session.username}!\n\n` +
+      "Choose what to do:\n" +
+      "/createMeal - Extract ingredients from photo and get recipe recommendations\n" +
+      "/analyseNutrition - Analyze nutrition content of your meal\n" +
+      "/logout - Sign out from your account"
     );
   } else {
     bot.sendMessage(chatId,
-      "Hi! To use this bot, please log in first.\n\nUse /login to sign in with your account."
+      "Hi! To use this bot, please log in first.\n\n" +
+      "Use /login to sign in with your account."
     );
   }
 });
@@ -89,6 +102,46 @@ bot.onText(/\/logout/, (msg) => {
   const username = session.username;
   sessions.set(chatId, { state: "idle" });
   bot.sendMessage(chatId, `You have been logged out, ${username}. Use /login to sign in again.`);
+});
+
+// /createMeal command – extract ingredients and recommend recipes
+bot.onText(/\/createMeal/, (msg) => {
+  const chatId = msg.chat.id;
+  const session = getSession(chatId);
+
+  if (!isAuthenticated(chatId)) {
+    return bot.sendMessage(chatId, "Please use /login to sign in before using this command.");
+  }
+
+  session.state = "awaiting_photo_createMeal";
+  session.mode = "createMeal";
+  bot.sendMessage(chatId, 
+    "📸 Send me a photo of your ingredients!\n\n" +
+    "For best results:\n" +
+    "- Include the ArUco calibration card for accurate measurements\n" +
+    "- Show all ingredients clearly\n\n" +
+    "I'll detect the ingredients and suggest recipes with proper portions."
+  );
+});
+
+// /analyseNutrition command – analyze meal nutrition
+bot.onText(/\/analyseNutrition/, (msg) => {
+  const chatId = msg.chat.id;
+  const session = getSession(chatId);
+
+  if (!isAuthenticated(chatId)) {
+    return bot.sendMessage(chatId, "Please use /login to sign in before using this command.");
+  }
+
+  session.state = "awaiting_photo_analyseNutrition";
+  session.mode = "analyseNutrition";
+  bot.sendMessage(chatId, 
+    "🍽️ Send me a photo of your meal!\n\n" +
+    "For best results:\n" +
+    "- Include the ArUco calibration card for portion size estimation\n" +
+    "- Show the meal clearly\n\n" +
+    "I'll analyze the nutrition content of your meal."
+  );
 });
 
 // Handle all text messages for the login flow
@@ -135,7 +188,11 @@ bot.on("message", async (msg) => {
       }
 
       bot.sendMessage(chatId,
-        `✅ Login successful! Welcome, ${result.username}.\n\nYou can now send me a photo of your meal with the calibration card for analysis.`
+        `✅ Login successful! Welcome, ${result.username}.\n\n` +
+        "Choose what to do:\n" +
+        "/createMeal - Extract ingredients and get recipe recommendations\n" +
+        "/analyseNutrition - Analyze nutrition of your meal\n" +
+        "/logout - Sign out"
       );
     } catch (err) {
       const message = err.response?.data?.message || "Login failed. Please try again.";
@@ -146,9 +203,11 @@ bot.on("message", async (msg) => {
     return;
   }
 
-  // Authenticated users may get here from free-text – just guide them
+  // Authenticated users may get here from free-text – guide them to use a command
   if (session.state === "authenticated") {
-    bot.sendMessage(chatId, "Send me a photo of your meal with the calibration card to analyze it.");
+    bot.sendMessage(chatId, 
+      `Use /createMeal to extract ingredients and get recipes, or /analyseNutrition to analyze meal nutrition.`
+    );
   } else {
     bot.sendMessage(chatId, "Please use /login to sign in before using this bot.");
   }
@@ -157,6 +216,7 @@ bot.on("message", async (msg) => {
 // Listen for photos
 bot.on("photo", async (msg) => {
   const chatId = msg.chat.id;
+  const session = getSession(chatId);
 
   if (!isAuthenticated(chatId)) {
     return bot.sendMessage(chatId, "Please use /login to sign in before sending photos.");
@@ -193,17 +253,157 @@ bot.on("photo", async (msg) => {
     // If the check fails (e.g. API not reachable), fall through to normal analysis
   }
 
-  // No pending request – do the normal meal analysis flow
-  bot.sendMessage(chatId, "Got your photo. Analyzing...");
+  // Check if user selected a specific mode
+  const mode = session.mode;
 
-  try {
-    const result = await sendPhotoToApi(bot, best.file_id, API_URL);
-    // Expect result like { nutrition: {...}, items: [...] }
-    await bot.sendMessage(chatId, `Analysis:\n${JSON.stringify(result, null, 2)}`);
-  } catch (err) {
-    console.error(err);
-    await bot.sendMessage(chatId, "Sorry—analysis failed. Please try again.");
+  if (session.state === "awaiting_photo_createMeal") {
+    await handleCreateMealPhoto(chatId, best.file_id, session);
+    session.state = "authenticated";
+    session.mode = null;
+  } else if (session.state === "awaiting_photo_analyseNutrition") {
+    await handleAnalyseNutritionPhoto(chatId, best.file_id, session);
+    session.state = "authenticated";
+    session.mode = null;
+  } else {
+    // No specific mode selected – show user the choice
+    await showModeChoice(chatId);
   }
 });
+
+/**
+ * Handle /createMeal photo – extract ingredients and recommend recipes
+ */
+async function handleCreateMealPhoto(chatId, fileId, session) {
+  try {
+    await bot.sendMessage(chatId, "🔍 Analyzing your ingredients...");
+
+    // Get file from Telegram
+    const file = await bot.getFile(fileId);
+    const fileUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+    const imageResp = await axios.get(fileUrl, { responseType: "arraybuffer" });
+    const imageBuffer = Buffer.from(imageResp.data);
+
+    // Send to /analyze-ingredients endpoint (at the Node.js API root)
+    const result = await axios.post(`${API_URL}/analyze-ingredients`, imageBuffer, {
+      headers: { "Content-Type": "application/octet-stream" },
+    });
+
+    const { detected, recipes } = result.data;
+
+    // Format ingredients message
+    let ingredientsMsg = "✅ Detected Ingredients:\n\n";
+    if (detected && detected.length > 0) {
+      detected.forEach((ing) => {
+        ingredientsMsg += `• ${ing}\n`;
+      });
+    } else {
+      ingredientsMsg += "No ingredients detected.";
+    }
+
+    await bot.sendMessage(chatId, ingredientsMsg);
+
+    // Format recipe recommendations
+    if (recipes && recipes.length > 0) {
+      let recipesMsg = "\n🍳 Recommended Recipes:\n\n";
+      recipes.slice(0, 3).forEach((rec, idx) => {
+        recipesMsg += `${idx + 1}. *${rec.title}*\n`;
+        recipesMsg += `   ${rec.desc}\n`;
+        if (rec.missing && rec.missing.length > 0) {
+          recipesMsg += `   Missing: ${rec.missing.join(", ")}\n`;
+        }
+        recipesMsg += "\n";
+      });
+      await bot.sendMessage(chatId, recipesMsg, { parse_mode: "Markdown" });
+    } else {
+      await bot.sendMessage(chatId, "❌ No matching recipes found for these ingredients.");
+    }
+
+    // Reset state and show command options
+    session.state = "authenticated";
+    session.mode = null;
+    await showCommandOptions(chatId, session.username);
+  } catch (err) {
+    console.error("createMeal error:", err.message);
+    await bot.sendMessage(
+      chatId,
+      `❌ Error: ${err.response?.data?.detail || err.message}\n\nPlease try again with a clearer photo of your ingredients.`
+    );
+    session.state = "authenticated";
+    session.mode = null;
+    await showCommandOptions(chatId, session.username);
+  }
+}
+
+/**
+ * Handle /analyseNutrition photo – analyze meal nutrition
+ */
+async function handleAnalyseNutritionPhoto(chatId, fileId, session) {
+  try {
+    await bot.sendMessage(chatId, "🔍 Analyzing nutrition content...");
+
+    // Get file from Telegram
+    const file = await bot.getFile(fileId);
+    const fileUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+    const imageResp = await axios.get(fileUrl, { responseType: "arraybuffer" });
+    const imageBuffer = Buffer.from(imageResp.data);
+
+    // Send to /analyze endpoint (at the Node.js API root, not /api/analyze)
+    const result = await axios.post(`${API_URL}/analyze`, imageBuffer, {
+      headers: { "Content-Type": "application/octet-stream" },
+    });
+
+    const { name, calories, macros, highlights, suggestions } = result.data;
+
+    // Format nutrition message
+    let nutritionMsg = "📊 Nutrition Analysis:\n\n";
+    nutritionMsg += `*${name}*\n\n`;
+    nutritionMsg += `🔥 Total Calories: ${calories.toFixed(0)} kcal\n\n`;
+    nutritionMsg += "*Macros:*\n";
+    nutritionMsg += `• Protein: ${macros.protein.toFixed(1)}g\n`;
+    nutritionMsg += `• Carbohydrates: ${macros.carbs.toFixed(1)}g\n`;
+    nutritionMsg += `• Fat: ${macros.fats.toFixed(1)}g\n`;
+
+    if (highlights && highlights.length > 0) {
+      nutritionMsg += `\n*Highlights:* ${highlights.join(", ")}\n`;
+    }
+
+    if (suggestions && suggestions.length > 0) {
+      nutritionMsg += `\n*Suggestions:*\n`;
+      suggestions.forEach((sug) => {
+        nutritionMsg += `• ${sug}\n`;
+      });
+    }
+
+    await bot.sendMessage(chatId, nutritionMsg, { parse_mode: "Markdown" });
+
+    // Reset state and show command options
+    session.state = "authenticated";
+    session.mode = null;
+    await showCommandOptions(chatId, session.username);
+  } catch (err) {
+    console.error("analyseNutrition error:", err.message);
+    await bot.sendMessage(
+      chatId,
+      `❌ Error: ${err.response?.data?.detail || err.message}\n\nPlease try again with a clearer photo of your meal.`
+    );
+    session.state = "authenticated";
+    session.mode = null;
+    await showCommandOptions(chatId, session.username);
+  }
+}
+
+/**
+ * Show available commands after successful analysis
+ */
+async function showCommandOptions(chatId, username) {
+  await bot.sendMessage(
+    chatId,
+    `✅ Analysis complete, ${username}!\n\n` +
+    "What would you like to do next?\n\n" +
+    "/createMeal - Extract ingredients and get recipes\n" +
+    "/analyseNutrition - Analyze meal nutrition\n" +
+    "/logout - Sign out"
+  );
+}
 
 console.log("Telegram bot running. Send /start in Telegram.");

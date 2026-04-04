@@ -1,104 +1,123 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Dashboard.css";
 import seefoodLogo from "../assets/images/seefood-logo.jpg";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  // Demo data (replace with your real data later)
-  const [groceryItems, setGroceryItems] = useState([
-    { id: 1, name: "Bananas", category: "Fruits & Veg", checked: false },
-    { id: 2, name: "Milk", category: "Dairy", checked: true },
-    { id: 3, name: "Eggs", category: "Dairy", checked: false },
-    { id: 4, name: "Chicken breast", category: "Protein", checked: false },
-    { id: 5, name: "Spinach", category: "Fruits & Veg", checked: false },
-  ]);
+  const userId = useMemo(() => localStorage.getItem("seefood_user_id") || "", []);
 
+  // ── Grocery list state ────────────────────────────────────────────────────
+  const [groceryItems, setGroceryItems] = useState([]);
   const [newItem, setNewItem] = useState("");
 
-  const [recentMeals] = useState([
-    {
-      id: "m1",
-      day: "Monday",
-      title: "Chicken quinoa bowl",
-      desc: "High protein, balanced carbs & fiber.",
-    },
-    {
-      id: "m2",
-      day: "Tuesday",
-      title: "Blueberry yogurt parfait",
-      desc: "Good calcium + antioxidants.",
-    },
-    {
-      id: "m3",
-      day: "Wednesday",
-      title: "Salmon & greens",
-      desc: "Omega-3 rich + micronutrients.",
-    },
-  ]);
+  // ── Recent meals state ─────────────────────────────────────────────────────
+  const [recentMeals, setRecentMeals] = useState([]);
+  const [mealsLoading, setMealsLoading] = useState(true);
+
+  // ── Load grocery items from API ───────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${API_URL}/grocery?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => setGroceryItems(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [userId]);
+
+  // ── Load recent meals from API ────────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) { setMealsLoading(false); return; }
+    fetch(`${API_URL}/logs?userId=${userId}&limit=3`)
+      .then((res) => res.json())
+      .then((logs) => {
+        const meals = Array.isArray(logs) ? logs.map((log) => ({
+          id: log._id,
+          title: log.food_name,
+          desc:
+            log.type === "planned"
+              ? log.notes || "Planned meal from ingredient scan"
+              : `${log.calories} kcal • Protein ${log.protein}g • Carbs ${log.carbs}g • Fats ${log.fats}g`,
+          type: log.type || "tracked",
+          date: log.created_at || log.log_date,
+        })) : [];
+        setRecentMeals(meals);
+        setMealsLoading(false);
+      })
+      .catch(() => setMealsLoading(false));
+  }, [userId]);
 
   const stats = useMemo(
     () => [
-      { label: "Meals tracked (7d)", value: "6" },
-      { label: "Avg calories", value: "1,820" },
-      { label: "Protein goal", value: "72%" },
+      { label: "Recent meals", value: String(recentMeals.length) },
       { label: "Grocery items", value: String(groceryItems.length) },
+      { label: "Items remaining", value: String(groceryItems.filter((x) => !x.checked).length) },
+      { label: "Checked off", value: String(groceryItems.filter((x) => x.checked).length) },
     ],
-    [groceryItems.length]
+    [recentMeals.length, groceryItems]
   );
 
-  function toggleItem(id) {
-    setGroceryItems((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, checked: !it.checked } : it))
-    );
-  }
-
-  function addItem() {
+  // ── Grocery actions ───────────────────────────────────────────────────────
+  async function addItem() {
     const trimmed = newItem.trim();
-    if (!trimmed) return;
+    if (!trimmed || !userId) return;
 
-    setGroceryItems((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        name: trimmed,
-        category: "Uncategorised",
-        checked: false,
-      },
-    ]);
+    const tempId = `temp-${Date.now()}`;
+    const optimistic = { _id: tempId, name: trimmed, category: "Uncategorised", checked: false };
+    setGroceryItems((prev) => [...prev, optimistic]);
     setNewItem("");
+
+    try {
+      const resp = await fetch(`${API_URL}/grocery`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, name: trimmed }),
+      });
+      const saved = await resp.json();
+      setGroceryItems((prev) =>
+        prev.map((it) => (it._id === tempId ? saved : it))
+      );
+    } catch {
+      setGroceryItems((prev) => prev.filter((it) => it._id !== tempId));
+    }
   }
 
-  function removeItem(id) {
-    setGroceryItems((prev) => prev.filter((it) => it.id !== id));
+  async function toggleItem(id, currentChecked) {
+    setGroceryItems((prev) =>
+      prev.map((it) => (it._id === id ? { ...it, checked: !currentChecked } : it))
+    );
+    try {
+      await fetch(`${API_URL}/grocery/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checked: !currentChecked }),
+      });
+    } catch {
+      setGroceryItems((prev) =>
+        prev.map((it) => (it._id === id ? { ...it, checked: currentChecked } : it))
+      );
+    }
   }
 
-  function addMealToGrocery(mealId) {
-    // Simple demo: add common items per meal
-    const additionsByMeal = {
-      m1: ["Quinoa", "Chicken breast", "Cherry tomatoes"],
-      m2: ["Greek yogurt", "Blueberries", "Granola"],
-      m3: ["Salmon", "Mixed greens", "Lemon"],
-    };
-
-    const additions = additionsByMeal[mealId] ?? ["Ingredients"];
-    setGroceryItems((prev) => {
-      const existingLower = new Set(prev.map((x) => x.name.toLowerCase()));
-      const toAdd = additions
-        .filter((n) => !existingLower.has(n.toLowerCase()))
-        .map((name) => ({
-          id: Date.now() + Math.random(),
-          name,
-          category: "Suggested",
-          checked: false,
-        }));
-      return [...prev, ...toAdd];
-    });
+  async function removeItem(id) {
+    setGroceryItems((prev) => prev.filter((it) => it._id !== id));
+    try {
+      await fetch(`${API_URL}/grocery/${id}`, { method: "DELETE" });
+    } catch {
+      // Non-fatal — item is already gone from UI
+    }
   }
 
   function onKeyDown(e) {
     if (e.key === "Enter") addItem();
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
   }
 
   function handleLogout() {
@@ -159,12 +178,12 @@ export default function Dashboard() {
           </p>
         </section>
 
-        {/* TOP GRID (left summary, right grocery list) */}
+        {/* TOP GRID */}
         <section className="dash-grid">
           <div className="panel">
             <div className="panel-head">
               <h2>Overview</h2>
-              <span className="pill">This week</span>
+              <span className="pill">Your account</span>
             </div>
 
             <div className="stats-grid">
@@ -177,14 +196,17 @@ export default function Dashboard() {
             </div>
 
             <div className="panel-note">
-              Tip: After scanning meals/ingredients, save results to history so you can see trends here.
+              Scan a meal or ingredients to build up your history and grocery list.
             </div>
           </div>
 
+          {/* GROCERY LIST */}
           <div className="panel">
             <div className="panel-head">
               <h2>Grocery list</h2>
-              <span className="pill">{groceryItems.filter((x) => !x.checked).length} left</span>
+              <span className="pill">
+                {groceryItems.filter((x) => !x.checked).length} left
+              </span>
             </div>
 
             <div className="add-row">
@@ -202,13 +224,18 @@ export default function Dashboard() {
             </div>
 
             <div className="list">
+              {groceryItems.length === 0 && (
+                <div className="empty-list-note">
+                  Your grocery list is empty. Add items above.
+                </div>
+              )}
               {groceryItems.map((item) => (
-                <div className="list-row" key={item.id}>
+                <div className="list-row" key={item._id}>
                   <label className="check">
                     <input
                       type="checkbox"
                       checked={item.checked}
-                      onChange={() => toggleItem(item.id)}
+                      onChange={() => toggleItem(item._id, item.checked)}
                     />
                     <span className="check-ui" />
                   </label>
@@ -222,7 +249,7 @@ export default function Dashboard() {
 
                   <button
                     className="icon-btn"
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => removeItem(item._id)}
                     aria-label="Remove item"
                   >
                     ✕
@@ -240,27 +267,42 @@ export default function Dashboard() {
             <span className="pill">Recent meals</span>
           </div>
 
-          <div className="lately-grid">
-            {recentMeals.map((m) => (
-              <article className="meal-card" key={m.id}>
-                <div className="meal-top">
-                  <span className="meal-day">{m.day}</span>
-                  <span className="meal-chip">Tracked</span>
-                </div>
-                <h3 className="meal-title">{m.title}</h3>
-                <p className="meal-desc">{m.desc}</p>
+          {mealsLoading && (
+            <div className="panel-note">Loading recent meals…</div>
+          )}
 
-                <div className="meal-actions">
-                  <button className="ghost-btn" onClick={() => addMealToGrocery(m.id)}>
-                    + Add to grocery list
-                  </button>
-                  <button className="link-btn" onClick={() => navigate("/history")}>
-                    View details →
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+          {!mealsLoading && recentMeals.length === 0 && (
+            <div className="panel-note">
+              No meals scanned yet. Go to{" "}
+              <button className="link-btn" onClick={() => navigate("/scan-meal")}>
+                Scan Meal
+              </button>{" "}
+              to get started.
+            </div>
+          )}
+
+          {!mealsLoading && recentMeals.length > 0 && (
+            <div className="lately-grid">
+              {recentMeals.map((m) => (
+                <article className="meal-card" key={m.id}>
+                  <div className="meal-top">
+                    <span className="meal-day">{formatDate(m.date)}</span>
+                    <span className="meal-chip">
+                      {m.type === "planned" ? "Planned" : "Tracked"}
+                    </span>
+                  </div>
+                  <h3 className="meal-title">{m.title}</h3>
+                  <p className="meal-desc">{m.desc}</p>
+
+                  <div className="meal-actions">
+                    <button className="link-btn" onClick={() => navigate("/history")}>
+                      View details →
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </main>
     </div>

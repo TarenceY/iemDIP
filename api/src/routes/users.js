@@ -20,6 +20,8 @@ const registerLimiter = rateLimit({
 router.post("/register", registerLimiter, UsersController.register);
 router.post("/login", loginLimiter, UsersController.login);
 router.put("/profile/:id", UsersController.updateProfile);
+router.put("/:id/password", UsersController.changePassword);
+router.delete("/:id", UsersController.deleteUser);
 router.get("/:id", UsersController.getUserInfo);
 
 module.exports = router;

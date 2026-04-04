@@ -494,3 +494,10 @@ button.ghost-btn:hover {
     font-size: 16px;
   }
 }
+
+.empty-list-note {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 12px 0;
+  text-align: center;
+}

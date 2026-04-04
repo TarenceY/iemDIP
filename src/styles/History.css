@@ -423,3 +423,170 @@ button.ghost-btn:hover {
     font-size: 16px;
   }
 }
+
+/* ── Clickable card ─────────────────────────────────────────────────────── */
+.history-card.clickable {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.history-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.13);
+}
+
+.card-footer {
+  margin-top: 12px;
+}
+
+.view-hint {
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+}
+
+/* ── Detail modal ───────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 28px 32px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(17, 24, 39, 0.2);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.modal-close:hover {
+  background: #f3f4f6;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.3;
+}
+
+.modal-date {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.modal-calories {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.cal-value {
+  font-size: 42px;
+  font-weight: 800;
+  color: #1f5a3b;
+  line-height: 1;
+}
+
+.cal-unit {
+  font-size: 16px;
+  color: #6b7280;
+}
+
+.modal-macros {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.modal-macro {
+  flex: 1;
+  background: #f6f2e9;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.modal-macro .macro-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.modal-macro .macro-lbl {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.modal-section {
+  margin-bottom: 16px;
+}
+
+.modal-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.modal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.modal-suggestions {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-suggestions li {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.modal-notes {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}

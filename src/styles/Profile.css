@@ -460,6 +460,39 @@ button.ghost-btn:hover {
   font-weight: 600;
 }
 
+.inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 16px;
+  background: #f6f2e9;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.inline-form .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+
+.form-error {
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.form-success {
+  font-size: 13px;
+  color: var(--green2);
+  font-weight: 600;
+}
+
 @media (max-width: 640px) {
   .profile-header {
     padding: 12px 18px;

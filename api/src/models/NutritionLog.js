@@ -11,6 +11,10 @@ const logSchema = new mongoose.Schema({
   fiber: Number,
   sodium: Number,
   notes: String,
+  type: { type: String, default: "tracked" }, // "tracked" (scan-meal) | "planned" (scan-ingredients)
+  ingredients: { type: [String], default: [] },
+  highlights: { type: [String], default: [] },
+  suggestions: { type: [String], default: [] },
   created_at: { type: Date, default: Date.now }
 });
 

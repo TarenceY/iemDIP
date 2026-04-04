@@ -85,7 +85,7 @@ exports.updateProfile = async (req, res) => {
     if (telegramChatId !== undefined) updates.telegramChatId = telegramChatId;
     if (telegramUsername !== undefined) updates.telegramUsername = telegramUsername;
 
-    const user = await User.findByIdAndUpdate(userId, updates, { new: true }).select("-password_hash");
+    const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     res.json({ message: "Profile updated", user });

@@ -17,9 +17,53 @@ const photoRequestSchema = new mongoose.Schema({
   status:           { type: String, enum: ["pending", "completed", "expired"], default: "pending" },
   photoUrl:         { type: String },   // S3 URL or local API endpoint
   createdAt:        { type: Date, default: Date.now },
+  expiresAt:        { type: Date, default: () => new Date(Date.now() + 10 * 60 * 1000) },
 });
 
-// Automatically expire documents after 10 minutes (MongoDB TTL index)
-photoRequestSchema.index({ createdAt: 1 }, { expireAfterSeconds: 600 });
+function getPendingExpiryDate() {
+  return new Date(Date.now() + 10 * 60 * 1000);
+}
 
+photoRequestSchema.pre("save", function(next) {
+  if (this.status === "pending") {
+    this.expiresAt = this.expiresAt || getPendingExpiryDate();
+  } else {
+    this.expiresAt = undefined;
+  }
+
+  next();
+});
+
+function syncExpiresAtOnUpdate(next) {
+  const update = this.getUpdate() || {};
+  const nextStatus = update.status || (update.$set && update.$set.status);
+
+  if (!nextStatus) {
+    return next();
+  }
+
+  if (!update.$set) {
+    update.$set = {};
+  }
+
+  if (nextStatus === "pending") {
+    update.$set.expiresAt = update.$set.expiresAt || getPendingExpiryDate();
+  } else {
+    update.$unset = { ...(update.$unset || {}), expiresAt: 1 };
+    delete update.$set.expiresAt;
+  }
+
+  this.setUpdate(update);
+  next();
+}
+
+photoRequestSchema.pre("findOneAndUpdate", syncExpiresAtOnUpdate);
+photoRequestSchema.pre("updateOne", syncExpiresAtOnUpdate);
+photoRequestSchema.pre("updateMany", syncExpiresAtOnUpdate);
+
+// Automatically expire only pending documents when their per-document expiry time is reached.
+photoRequestSchema.index(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0, partialFilterExpression: { status: "pending" } }
+);
 module.exports = mongoose.model("PhotoRequest", photoRequestSchema);

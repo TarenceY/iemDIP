@@ -105,7 +105,7 @@ Respond ONLY with valid JSON, no additional text."""
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = os.getenv("GEMINI_MODEL", "gemini-3.0-flash")
+        model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     ):
         """Initialize the Gemini analyzer using the new genai.Client."""
         if not GEMINI_AVAILABLE:
@@ -273,7 +273,7 @@ Respond ONLY with valid JSON, no additional text."""
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = os.getenv("GEMINI_MODEL", "gemini-3.0-flash")
+        model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     ):
         """Initialize the Gemini ingredient analyzer using the new genai.Client."""
         if not GEMINI_AVAILABLE:

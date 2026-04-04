@@ -182,9 +182,16 @@ export default function ScanMeal() {
     }
   }
 
+  function handleLogout() {
+    localStorage.removeItem("seefood_user_id");
+    localStorage.removeItem("seefood_username");
+    navigate("/login");
+  }
+
   function saveToHistory() {
     if (!result) return showToast("Analyze a meal first.");
     showToast("Saved to history ✅");
+    setTimeout(() => navigate("/history"), 1200);
   }
 
   function goToDashboard() {
@@ -219,7 +226,7 @@ export default function ScanMeal() {
           <button className="nav-btn" onClick={() => navigate("/profile")}>Profile</button>
         </nav>
 
-        <button className="nav-btn" onClick={() => navigate("/login")}>Log out</button>
+        <button className="nav-btn" onClick={handleLogout}>Log out</button>
       </header>
 
       <main className="scanmeal-content">

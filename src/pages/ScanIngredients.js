@@ -175,9 +175,34 @@ export default function ScanIngredients() {
     }
   }
 
-  function savePlannedMeal(recipe) {
+  function handleLogout() {
+    localStorage.removeItem("seefood_user_id");
+    localStorage.removeItem("seefood_username");
+    navigate("/login");
+  }
+
+  async function savePlannedMeal(recipe) {
     if (!result) return showToast("Analyze ingredients first.");
-    showToast(`Saved "${recipe.title}" to history ✅`);
+    const userId = localStorage.getItem("seefood_user_id");
+    if (!userId) return showToast("Log in to save to history.");
+
+    try {
+      const resp = await fetch(`${API_URL}/logs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          foodName: recipe.title,
+          notes: recipe.desc,
+          type: "planned",
+          ingredients: result.detected,
+        }),
+      });
+      if (!resp.ok) throw new Error("Failed to save");
+      showToast(`Saved "${recipe.title}" to history ✅`);
+    } catch {
+      showToast("Failed to save. Is the API running?");
+    }
   }
 
   function addMissingToGrocery(recipe) {
@@ -229,7 +254,7 @@ export default function ScanIngredients() {
           </button>
         </nav>
 
-        <button className="logout-btn" onClick={() => navigate("/login")}>
+        <button className="logout-btn" onClick={handleLogout}>
           Log out
         </button>
       </header>

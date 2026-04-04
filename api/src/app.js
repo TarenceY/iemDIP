@@ -32,6 +32,12 @@ app.use("/users", usersRoutes);
 const telegramRoutes = require("./routes/telegram");
 app.use("/telegram", telegramRoutes);
 
+const logsRoutes = require("./routes/logs");
+app.use("/logs", logsRoutes);
+
+const groceryRoutes = require("./routes/grocery");
+app.use("/grocery", groceryRoutes);
+
 const rateLimit = require("express-rate-limit");
 const analyzeLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -129,45 +135,25 @@ function transformAIResponse(aiData) {
 }
 
 /**
- * Save nutrition analysis data into NutritionLog documents.
+ * Save one combined nutrition log entry for a meal analysis.
  * @param {string} userId
- * @param {object} aiData
+ * @param {object} result  Output of transformAIResponse()
  */
-async function saveNutritionLogs(userId, aiData) {
-  if (!userId || !aiData || !aiData.nutrition) return;
+async function saveNutritionLogs(userId, result) {
+  if (!userId || !result) return;
 
-  const nutrition = aiData.nutrition;
-  const backendData = nutrition.backend_data || {};
-  const backendItems = Array.isArray(backendData.items) ? backendData.items : [];
-  const totals = nutrition.totals || {};
-
-  const logsToInsert = backendItems.length > 0
-    ? backendItems.map((item) => ({
-        user_id: String(userId),
-        log_date: new Date(),
-        food_name: item.food_name || "Detected meal",
-        calories: Number(item.calories || 0),
-        carbs: Number(item.carbs || 0),
-        protein: Number(item.protein || 0),
-        fats: Number(item.fats || 0),
-        fiber: Number(item.fiber || 0),
-        sodium: Number(item.sodium || 0),
-        notes: item.notes || nutrition.analysis_notes || "",
-      }))
-    : [{
-        user_id: String(userId),
-        log_date: new Date(),
-        food_name: "Detected meal",
-        calories: Number(totals.calories || 0),
-        carbs: Number(totals.carbohydrates_g || 0),
-        protein: Number(totals.protein_g || 0),
-        fats: Number(totals.fat_g || 0),
-        fiber: 0,
-        sodium: 0,
-        notes: nutrition.analysis_notes || "",
-      }];
-
-  await NutritionLog.insertMany(logsToInsert);
+  await NutritionLog.create({
+    user_id: String(userId),
+    log_date: new Date(),
+    food_name: result.name,
+    calories: result.calories,
+    carbs: result.macros.carbs,
+    protein: result.macros.protein,
+    fats: result.macros.fats,
+    highlights: result.highlights || [],
+    suggestions: result.suggestions || [],
+    type: "tracked",
+  });
 }
 
 /**
@@ -244,10 +230,10 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
     });
   }
 
-  // Persist logs for users when userId is provided by webapp or bot flow.
+  // Persist one combined log entry per meal analysis when userId is provided.
   if (req.body && req.body.userId) {
     try {
-      await saveNutritionLogs(req.body.userId, aiData);
+      await saveNutritionLogs(req.body.userId, result);
     } catch (err) {
       console.error("Failed to save nutrition logs:", err.message);
     }

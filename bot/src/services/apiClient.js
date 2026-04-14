@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Download photo from Telegram and forward to your API
-export async function sendPhotoToApi(bot, fileId, API_URL) {
+export async function sendPhotoToApi(bot, fileId, API_URL, userId) {
   // 1) Get file path from Telegram
   const file = await bot.getFile(fileId); // { file_path: 'photos/file_123.jpg' }
   const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_TOKEN}/${file.file_path}`;
@@ -10,10 +10,13 @@ export async function sendPhotoToApi(bot, fileId, API_URL) {
   const imageResp = await axios.get(fileUrl, { responseType: "arraybuffer" });
   const imageBuffer = Buffer.from(imageResp.data);
 
-  // 3) Send to your backend API (replace endpoint with your design)
-  const resp = await axios.post(`${API_URL}/analyze`, imageBuffer, {
-    headers: { "Content-Type": "application/octet-stream" }
-  });
+  // 3) Send to your backend API with userId in header
+  const headers = { "Content-Type": "application/octet-stream" };
+  if (userId) {
+    headers["X-User-Id"] = String(userId);
+  }
+
+  const resp = await axios.post(`${API_URL}/analyze`, imageBuffer, { headers });
 
   return resp.data;
 }

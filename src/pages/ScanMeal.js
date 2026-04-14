@@ -371,18 +371,52 @@ export default function ScanMeal() {
                 </div>
 
                 <div className="chips">
-                  {result.highlights.map((h) => (
-                    <span className="chip" key={h}>{h}</span>
-                  ))}
+                  {result.advice && typeof result.advice === "object" && result.advice.verdict ? (
+                    <span className={`chip verdict-${result.advice.verdict.toLowerCase()}`}>
+                      {result.advice.verdict}
+                    </span>
+                  ) : result.highlights ? (
+                    result.highlights.map((h) => (
+                      <span className="chip" key={h}>{h}</span>
+                    ))
+                  ) : null}
                 </div>
 
                 <div className="suggestions">
-                  <div className="section-label">Suggestions</div>
-                  <ul>
-                    {result.suggestions.map((s) => (
-                      <li key={s}>{s}</li>
-                    ))}
-                  </ul>
+                  {typeof result.advice === "string" ? (
+                    <p>{result.advice}</p>
+                  ) : result.advice ? (
+                    <div>
+                      <div className="advice-section">
+                        <strong>Justification:</strong>
+                        <p>{result.advice.justification}</p>
+                      </div>
+                      {result.advice.analysis_notes && (
+                        <div className="advice-section">
+                          <strong>Analysis:</strong>
+                          <p>{result.advice.analysis_notes}</p>
+                        </div>
+                      )}
+                      {result.advice.notes && (
+                        <div className="advice-section">
+                          <strong>Recommendation:</strong>
+                          <p>{result.advice.notes}</p>
+                        </div>
+                      )}
+                      {result.advice.tips && result.advice.tips.length > 0 && (
+                        <div className="advice-section">
+                          <strong>Tips:</strong>
+                          <ul>
+                            {result.advice.tips.map((tip, idx) => (
+                              <li key={idx}>{tip}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p>No advice available</p>
+                  )}
                 </div>
 
                 <div className="result-actions">

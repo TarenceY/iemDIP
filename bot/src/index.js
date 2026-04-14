@@ -197,11 +197,36 @@ bot.on("photo", async (msg) => {
   bot.sendMessage(chatId, "Got your photo. Analyzing...");
 
   try {
-    const result = await sendPhotoToApi(bot, best.file_id, API_URL);
-    // Expect result like { nutrition: {...}, items: [...] }
-    // Create a copy without suggestions
-    const { suggestions, ...resultWithoutSuggestions } = result;
-    await bot.sendMessage(chatId, `Analysis:\n${JSON.stringify(resultWithoutSuggestions, null, 2)}`);
+    const session = getSession(chatId);
+    const userId = session.userId || null;
+    const result = await sendPhotoToApi(bot, best.file_id, API_URL, userId);
+    // Format the response with MealAdvice data if available
+    let mealAdviceText = "";
+    if (result.advice && typeof result.advice === "object") {
+      // MealAdvice object received
+      const advice = result.advice;
+      mealAdviceText =
+        `\n\n📋 *Meal Advice*\n` +
+        `\n*Justification:* ${advice.justification}\n\n` +
+        (advice.analysis_notes ? `*Analysis:* ${advice.analysis_notes}\n\n` : "") +
+        (advice.notes ? `*Suggestion:* ${advice.notes}\n` : "");
+    } else {
+      // Simple advice string
+      mealAdviceText = `\n\n*Suggestion:* ${result.advice || "Enjoy your meal!"}`;
+    }
+
+    const text =
+      `📊 *Meal Analysis*\n\n` +
+      `🍽️ *${result.name}*\n` +
+      `🔥 ${result.calories} kcal\n\n` +
+      `*Macros:*\n` +
+      `• Protein: ${result.macros.protein}g\n` +
+      `• Carbs: ${result.macros.carbs}g\n` +
+      `• Fats: ${result.macros.fats}g\n\n` +
+      `*Verdict:* ${result.advice && typeof result.advice === "object" ? result.advice.verdict : "N/A"}` +
+      mealAdviceText;
+
+    await bot.sendMessage(chatId, text, { parse_mode: "Markdown" });
   } catch (err) {
     console.error(err);
     await bot.sendMessage(chatId, "Sorry—analysis failed. Please try again.");

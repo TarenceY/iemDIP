@@ -97,7 +97,7 @@ async function callAIService(imageBuffer, mimeType = "image/jpeg") {
 /**
  * Transform the AI service response into the shape the React frontend expects.
  * @param {object} aiData  Response body from the Python AI service
- * @returns {object}       { name, calories, macros, highlights, suggestions }
+ * @returns {object}       { name, calories, macros, highlights, food_items }
  */
 function transformAIResponse(aiData) {
   const nutrition = aiData.nutrition || {};
@@ -122,16 +122,13 @@ function transformAIResponse(aiData) {
   if (calories <= 400) highlights.push("Low calorie");
   if (highlights.length === 0) highlights.push("Balanced meal");
 
-  // Parse suggestions from the AI analysis notes
-  const notes = nutrition.analysis_notes || "";
-  const suggestions = notes
-    .split(/[.!?]+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 10)
-    .slice(0, 3);
-  if (suggestions.length === 0) suggestions.push("Enjoy your meal!");
-
-  return { name, calories, macros: { protein, carbs, fats }, highlights, suggestions };
+  return { 
+    name, 
+    calories, 
+    macros: { protein, carbs, fats }, 
+    highlights,
+    food_items: foodItems
+  };
 }
 
 /**
@@ -151,7 +148,6 @@ async function saveNutritionLogs(userId, result) {
     protein: result.macros.protein,
     fats: result.macros.fats,
     highlights: result.highlights || [],
-    suggestions: result.suggestions || [],
     type: "tracked",
   });
 }
@@ -175,6 +171,101 @@ async function fetchTelegramPhoto(requestId) {
   return { buffer: Buffer.from(arrayBuffer), mimeType: "image/jpeg" };
 }
 
+/**
+ * Get meal advice from the Python AI service.
+ * @param {object} mealData  { name, calories, protein, carbs, fats, fiber, sodium }
+ * @param {string} userId    User ID to fetch profile and daily targets
+ * @returns {Promise<object>} MealAdvice data { verdict, justification, tips, analysis_notes, notes, ... }
+ */
+async function getMealAdvice(mealData, userId) {
+  const aiApiUrl = process.env.AI_API_URL || "http://localhost:8000";
+
+  try {
+    // Fetch user profile and daily totals from MongoDB if userId provided
+    let userProfile = {};
+    let dailyTotals = {};
+    let dailyTargets = {};
+
+    if (userId) {
+      const user = await User.findById(userId).select("age gender goals restrictions dislikes");
+      if (user) {
+        userProfile = {
+          age: user.age || 25,
+          gender: user.gender || "Not specified",
+          goals: user.goals || [],
+          restrictions: user.restrictions || [],
+          dislikes: user.dislikes || []
+        };
+      }
+
+      // Get today's nutrition totals
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const logs = await NutritionLog.find({
+        user_id: String(userId),
+        log_date: { $gte: today }
+      });
+
+      dailyTotals = {
+        total_calories: logs.reduce((sum, log) => sum + (log.calories || 0), 0),
+        total_protein_g: logs.reduce((sum, log) => sum + (log.protein || 0), 0),
+        total_carbs_g: logs.reduce((sum, log) => sum + (log.carbs || 0), 0),
+        total_fats_g: logs.reduce((sum, log) => sum + (log.fats || 0), 0),
+        total_sodium_mg: logs.reduce((sum, log) => sum + (log.sodium || 0), 0),
+        meals_count: logs.length
+      };
+
+      // Get user's daily targets (from profile or defaults)
+      dailyTargets = {
+        calories: user.daily_calorie_target || 2000,
+        protein_g: user.daily_protein_target || 50,
+        carbs_g: user.daily_carbs_target || 300,
+        fats_g: user.daily_fats_target || 65,
+        sodium_mg: user.daily_sodium_target || 2300
+      };
+    }
+
+    const payload = {
+      user_profile: userProfile,
+      meal_data: mealData,
+      daily_totals: dailyTotals,
+      daily_targets: dailyTargets
+    };
+
+    const response = await fetch(`${aiApiUrl}/api/meal-advice`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(`Meal advice service error ${response.status}: ${text}`);
+    }
+
+    const mealAdviceData = await response.json();
+    console.log("Meal advice response:", JSON.stringify(mealAdviceData, null, 2));
+    
+    // Unwrap the advice from the response structure
+    if (mealAdviceData.success && mealAdviceData.advice) {
+      return mealAdviceData.advice;
+    }
+    return mealAdviceData;
+  } catch (err) {
+    console.error("Error fetching meal advice:", err.message);
+    // Return a default advice if service fails
+    return {
+      verdict: "NEUTRAL",
+      justification: "Unable to generate detailed advice at this time.",
+      tips: ["Enjoy your meal!", "Stay hydrated"],
+      analysis_notes: "Meal advice service unavailable",
+      notes: "Please try again later",
+      calorie_percentage: 0,
+      will_exceed_targets: {}
+    };
+  }
+}
+
 // ---------------------------------------------------------------------------
 // POST /analyze
 //
@@ -190,19 +281,24 @@ async function fetchTelegramPhoto(requestId) {
 app.post("/analyze", analyzeLimiter, async (req, res) => {
   let imageBuffer;
   let mimeType = "image/jpeg";
+  let userId = null;
 
   try {
     if (Buffer.isBuffer(req.body)) {
       // Raw bytes sent by the Telegram bot
       imageBuffer = req.body;
+      // Try to get userId from header (bot sends it)
+      userId = req.headers["x-user-id"] || null;
     } else if (req.body && req.body.requestId) {
       // Telegram photo upload flow – locate the stored image
       const { buffer, mimeType: mt } = await fetchTelegramPhoto(req.body.requestId);
       imageBuffer = buffer;
       mimeType = mt;
+      userId = req.body.userId || null;
     } else if (req.body && req.body.image) {
       // Base64-encoded image from the webapp
       imageBuffer = Buffer.from(req.body.image, "base64");
+      userId = req.body.userId || null;
     } else {
       return res.status(400).json({ message: "No image provided." });
     }
@@ -231,11 +327,30 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
   }
 
   // Persist one combined log entry per meal analysis when userId is provided.
-  if (req.body && req.body.userId) {
+  if (userId) {
     try {
-      await saveNutritionLogs(req.body.userId, result);
+      await saveNutritionLogs(userId, result);
     } catch (err) {
       console.error("Failed to save nutrition logs:", err.message);
+    }
+  }
+
+  // Get meal advice if userId provided
+  let mealAdvice = null;
+  if (userId) {
+    try {
+      const mealData = {
+        food_name: result.name,
+        calories: result.calories,
+        protein: result.macros.protein,
+        carbs: result.macros.carbs,
+        fats: result.macros.fats,
+        fiber: 0,
+        sodium: 0
+      };
+      mealAdvice = await getMealAdvice(mealData, userId);
+    } catch (err) {
+      console.error("Failed to get meal advice:", err.message);
     }
   }
 
@@ -243,9 +358,9 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
   let chatId = null;
   if (req.body && req.body.chatId) {
     chatId = req.body.chatId;
-  } else if (req.body && req.body.userId) {
+  } else if (userId) {
     try {
-      const user = await User.findById(req.body.userId).select("telegramChatId");
+      const user = await User.findById(userId).select("telegramChatId");
       if (user && user.telegramChatId) chatId = user.telegramChatId;
     } catch (_) {
       // Non-fatal – proceed without Telegram notification
@@ -255,15 +370,21 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
   // Send Telegram notification if we have a chat ID and bot token
   const token = process.env.TELEGRAM_TOKEN;
   if (chatId && token) {
+    let adviceText = "Enjoy your meal!";
+    if (mealAdvice) {
+      adviceText = `${mealAdvice.verdict}: ${mealAdvice.notes}`;
+    }
+
     const text =
-      `📊 *Meal Analysis* (from webapp)\n\n` +
+      `📊 *Meal Analysis*\n\n` +
       `🍽️ *${result.name}*\n` +
       `🔥 ${result.calories} kcal\n\n` +
       `*Macros:*\n` +
       `• Protein: ${result.macros.protein}g\n` +
       `• Carbs: ${result.macros.carbs}g\n` +
       `• Fats: ${result.macros.fats}g\n\n` +
-      `*Highlights:* ${result.highlights.join(", ")}`;
+      `*Highlights:* ${result.highlights.join(", ")}\n` +
+      `*Suggestion:* ${adviceText}`;
 
     const payload = JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" });
     const options = {
@@ -281,7 +402,16 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
     telegramReq.end();
   }
 
-  res.json(result);
+  // Build response with meal advice
+  const responseData = {
+    name: result.name,
+    calories: result.calories,
+    macros: result.macros,
+    highlights: result.highlights,
+    advice: mealAdvice || "Enjoy your meal!"
+  };
+
+  res.json(responseData);
 });
 
 /**

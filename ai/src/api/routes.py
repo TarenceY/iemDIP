@@ -301,6 +301,95 @@ def create_app(
                 filename=f"aruco_marker_{marker_id}.png"
             )
     
+    @app.post("/api/meal-advice")
+    async def get_meal_advice(request_data: dict):
+        """
+        Analyze if meal will EXCEED USER'S DAILY TARGETS and provide meal quality advice.
+        
+        Gemini analyzes and returns:
+        - analysis_notes: Detailed analysis of which targets will be exceeded
+        - notes: Suggestions on whether to eat the meal and why
+        
+        Request body:
+        {
+            "user_profile": {
+                "age": 30,
+                "gender": "female",
+                "goals": ["weight_loss"],
+                "restrictions": ["vegetarian"],
+                "dislikes": ["spicy"]
+            },
+            "meal_data": {
+                "food_name": "Pizza",
+                "calories": 285,
+                "protein": 12,
+                "carbs": 36,
+                "fats": 10,
+                "fiber": 2,
+                "sodium": 600
+            },
+            "daily_totals": {
+                "total_calories": 1200,
+                "total_protein_g": 45,
+                "total_carbs_g": 150,
+                "total_fats_g": 35,
+                "total_fiber_g": 20,
+                "total_sodium_mg": 1500,
+                "meals_count": 2
+            },
+            "daily_targets": {
+                "calories": 1800,
+                "protein_g": 50,
+                "carbs_g": 225,
+                "fats_g": 60,
+                "fiber_g": 25,
+                "sodium_mg": 2300
+            }
+        }
+        
+        Returns meal advice with verdict (GOOD/CAUTION/BAD), analysis_notes, and suggestions.
+        """
+        try:
+            from ..gemini_layer.gemini_client import GeminiNutritionAnalyzer
+            
+            # Extract request data
+            user_profile = request_data.get("user_profile", {})
+            meal_data = request_data.get("meal_data", {})
+            daily_totals = request_data.get("daily_totals", {})
+            daily_targets = request_data.get("daily_targets", {})
+            
+            # Initialize Gemini analyzer
+            analyzer = GeminiNutritionAnalyzer(
+                api_key=os.getenv("GEMINI_API_KEY")
+            )
+            
+            # Get meal advice with target exceedance analysis
+            advice = analyzer.get_meal_advice(
+                user_profile=user_profile,
+                meal_data=meal_data,
+                daily_totals=daily_totals,
+                daily_targets=daily_targets
+            )
+            
+            # Convert dataclass to dict
+            return {
+                "success": True,
+                "timestamp": datetime.utcnow().isoformat(),
+                "advice": {
+                    "verdict": advice.verdict,
+                    "justification": advice.justification,
+                    "tips": advice.tips,
+                    "analysis_notes": advice.analysis_notes,  # Target exceedance analysis
+                    "notes": advice.notes,  # Suggestions & recommendations
+                    "calorie_percentage": round(advice.calorie_percentage, 1),
+                    "will_exceed_targets": advice.will_exceed_targets
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Meal advice generation failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
     return app
 
 

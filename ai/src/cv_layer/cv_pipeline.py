@@ -36,10 +36,10 @@ class CVPipeline:
     
     def __init__(
         self,
-        aruco_dict: str = "DICT_4X4_50",
+        aruco_dict: str = "DICT_5X5_50",
         aruco_marker_size_cm: float = 5.0,
         yolo_model_path: str = "yolov8n.pt",
-        confidence_threshold: float = 0.5,
+        confidence_threshold: float = 0.3,
         device: str = "auto"
     ):
         """

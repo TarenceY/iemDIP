@@ -48,7 +48,7 @@ class FoodNutritionPipeline:
         gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
         aruco_marker_size_cm: float = 5.0,
         yolo_model_path: str = "yolov8n.pt",
-        confidence_threshold: float = 0.5,
+        confidence_threshold: float = 0.3,
         device: str = "auto"
     ):
         """

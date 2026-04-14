@@ -263,8 +263,7 @@ app.post("/analyze", analyzeLimiter, async (req, res) => {
       `• Protein: ${result.macros.protein}g\n` +
       `• Carbs: ${result.macros.carbs}g\n` +
       `• Fats: ${result.macros.fats}g\n\n` +
-      `*Highlights:* ${result.highlights.join(", ")}\n` +
-      `*Suggestions:* ${result.suggestions.join("; ")}`;
+      `*Highlights:* ${result.highlights.join(", ")}`;
 
     const payload = JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" });
     const options = {

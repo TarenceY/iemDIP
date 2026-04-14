@@ -1,0 +1,41 @@
+2026-04-05 20:40:18.751 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-05 20:42:32.863 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-05 20:42:47.225 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-05 20:44:10.942 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-05 20:44:10.942 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-05 20:44:11.150 | INFO     | src.gemini_layer.gemini_client:__init__:123 - Gemini analyzer initialized with model: gemini-2.0-flash
+2026-04-05 20:44:11.150 | INFO     | src.pipeline:__init__:79 - Food Nutrition Pipeline initialized
+2026-04-05 20:44:11.150 | INFO     | src.pipeline:analyze:99 - Processing image: /tmp/tmpg0ixfis7.jpg
+2026-04-05 20:44:11.151 | INFO     | src.pipeline:analyze:102 - Running CV pipeline...
+2026-04-05 20:44:11.228 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-05 20:44:11.229 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-05 20:44:17.704 | INFO     | src.cv_layer.food_detector:load_model:69 - Loaded custom YOLO model from yolov8n.pt
+2026-04-05 20:44:18.005 | INFO     | src.cv_layer.food_detector:load_model:80 - YOLO model ready on device: cuda
+2026-04-05 20:44:20.230 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 0 objects
+2026-04-05 20:44:20.237 | INFO     | src.pipeline:analyze:106 - Running Gemini analysis...
+2026-04-05 20:44:20.361 | ERROR    | src.gemini_layer.gemini_client:analyze_from_bytes:168 - Gemini analysis failed: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}
+2026-04-05 20:44:20.362 | ERROR    | src.pipeline:analyze:137 - Pipeline failed: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}
+2026-04-05 20:50:39.654 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-05 20:59:14.428 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-05 20:59:14.453 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-05 20:59:15.093 | INFO     | src.gemini_layer.gemini_client:__init__:123 - Gemini analyzer initialized with model: gemini-2.0-flash
+2026-04-05 20:59:15.096 | INFO     | src.pipeline:__init__:79 - Food Nutrition Pipeline initialized
+2026-04-05 20:59:15.098 | INFO     | src.pipeline:analyze:99 - Processing image: /tmp/tmpe6x_82eq.jpg
+2026-04-05 20:59:15.099 | INFO     | src.pipeline:analyze:102 - Running CV pipeline...
+2026-04-05 20:59:15.221 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-05 20:59:15.222 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-05 20:59:24.719 | INFO     | src.cv_layer.food_detector:load_model:69 - Loaded custom YOLO model from yolov8n.pt
+2026-04-05 20:59:25.041 | INFO     | src.cv_layer.food_detector:load_model:80 - YOLO model ready on device: cuda
+2026-04-05 20:59:27.873 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 0 objects
+2026-04-05 20:59:27.880 | INFO     | src.pipeline:analyze:106 - Running Gemini analysis...
+2026-04-05 20:59:28.316 | ERROR    | src.gemini_layer.gemini_client:analyze_from_bytes:168 - Gemini analysis failed: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.0-flash is no longer available to new users. Please update your code to use a newer model for the latest features and improvements.', 'status': 'NOT_FOUND'}}
+2026-04-05 20:59:28.317 | ERROR    | src.pipeline:analyze:137 - Pipeline failed: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.0-flash is no longer available to new users. Please update your code to use a newer model for the latest features and improvements.', 'status': 'NOT_FOUND'}}
+2026-04-05 20:59:28.374 | INFO     | src.pipeline:analyze:99 - Processing image: /tmp/tmp09gs4fpg.jpg
+2026-04-05 20:59:28.375 | INFO     | src.pipeline:analyze:102 - Running CV pipeline...
+2026-04-05 20:59:28.457 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-05 20:59:28.458 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-05 20:59:28.481 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 0 objects
+2026-04-05 20:59:28.490 | INFO     | src.pipeline:analyze:106 - Running Gemini analysis...
+2026-04-05 20:59:28.728 | ERROR    | src.gemini_layer.gemini_client:analyze_from_bytes:168 - Gemini analysis failed: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.0-flash is no longer available to new users. Please update your code to use a newer model for the latest features and improvements.', 'status': 'NOT_FOUND'}}
+2026-04-05 20:59:28.729 | ERROR    | src.pipeline:analyze:137 - Pipeline failed: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.0-flash is no longer available to new users. Please update your code to use a newer model for the latest features and improvements.', 'status': 'NOT_FOUND'}}
+2026-04-05 21:04:09.547 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000

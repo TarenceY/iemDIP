@@ -57,11 +57,19 @@ class ArUcoDetector:
         self.marker_size_cm = marker_size_cm
         
         # Get ArUco dictionary
-        dict_id = self.ARUCO_DICTS.get(dictionary, cv2.aruco.DICT_4X4_50)
+        dict_id = self.ARUCO_DICTS.get(dictionary, cv2.aruco.DICT_5X5_50)
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(dict_id)
         
-        # Create detector parameters
+        # Create detector parameters with tuning for better detection
         self.parameters = cv2.aruco.DetectorParameters()
+        
+        # Improve detection reliability
+        self.parameters.adaptiveThreshConstant = 10  # Lower = more sensitive
+        self.parameters.adaptiveThreshWinSizeMin = 3
+        self.parameters.adaptiveThreshWinSizeMax = 23
+        self.parameters.adaptiveThreshWinSizeStep = 10
+        self.parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+        self.parameters.cornerRefinementWinSize = 5
         
         # Create detector
         self.detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters)
@@ -81,8 +89,27 @@ class ArUcoDetector:
         # Convert to grayscale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
-        # Detect markers
+        # Try detection on original
         corners, ids, rejected = self.detector.detectMarkers(gray)
+        
+        # If no markers found, try with preprocessing
+        if ids is None or len(ids) == 0:
+            logger.debug("No markers on first try, attempting preprocessing...")
+            
+            # Try with CLAHE (Contrast Limited Adaptive Histogram Equalization)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            gray_clahe = clahe.apply(gray)
+            corners, ids, rejected = self.detector.detectMarkers(gray_clahe)
+            
+            # Try with histogram equalization
+            if ids is None or len(ids) == 0:
+                gray_eq = cv2.equalizeHist(gray)
+                corners, ids, rejected = self.detector.detectMarkers(gray_eq)
+            
+            # Try with Gaussian blur to reduce noise
+            if ids is None or len(ids) == 0:
+                blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+                corners, ids, rejected = self.detector.detectMarkers(blurred)
         
         results = []
         

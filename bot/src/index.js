@@ -199,7 +199,9 @@ bot.on("photo", async (msg) => {
   try {
     const result = await sendPhotoToApi(bot, best.file_id, API_URL);
     // Expect result like { nutrition: {...}, items: [...] }
-    await bot.sendMessage(chatId, `Analysis:\n${JSON.stringify(result, null, 2)}`);
+    // Create a copy without suggestions
+    const { suggestions, ...resultWithoutSuggestions } = result;
+    await bot.sendMessage(chatId, `Analysis:\n${JSON.stringify(resultWithoutSuggestions, null, 2)}`);
   } catch (err) {
     console.error(err);
     await bot.sendMessage(chatId, "Sorry—analysis failed. Please try again.");

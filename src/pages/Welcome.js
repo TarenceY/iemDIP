@@ -135,7 +135,10 @@ export default function Welcome() {
               <button className="primary-btn hero-primary" onClick={() => navigate("/signup")}>
                 Get Started
               </button>
-              <button className="secondary-btn" onClick={() => navigate("/login")}>
+              <button
+                className="secondary-btn"
+                onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+              >
                 See Demo Flow
               </button>
             </div>

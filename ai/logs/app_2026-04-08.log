@@ -1,0 +1,17 @@
+2026-04-08 15:08:40.058 | INFO     | __main__:run_server:50 - Starting server on 0.0.0.0:8000
+2026-04-08 15:12:16.007 | INFO     | src.cv_layer.aruco_detector:__init__:69 - ArUco detector initialized with DICT_4X4_50, marker size: 5.0cm
+2026-04-08 15:12:16.009 | INFO     | src.cv_layer.cv_pipeline:__init__:66 - CV Pipeline initialized
+2026-04-08 15:12:19.660 | INFO     | src.gemini_layer.gemini_client:__init__:123 - Gemini analyzer initialized with model: gemini-2.5-flash
+2026-04-08 15:12:19.662 | INFO     | src.pipeline:__init__:79 - Food Nutrition Pipeline initialized
+2026-04-08 15:12:19.663 | INFO     | src.pipeline:analyze:99 - Processing image: C:\Users\taren\AppData\Local\Temp\tmpumfghkk7.jpg
+2026-04-08 15:12:19.667 | INFO     | src.pipeline:analyze:102 - Running CV pipeline...
+2026-04-08 15:12:20.056 | INFO     | src.cv_layer.aruco_detector:detect:120 - Detected 0 ArUco markers
+2026-04-08 15:12:20.058 | WARNING  | src.cv_layer.cv_pipeline:process:87 - No ArUco marker detected - measurements will be approximate
+2026-04-08 15:13:00.852 | INFO     | src.cv_layer.food_detector:load_model:69 - Loaded custom YOLO model from yolov8n.pt
+2026-04-08 15:13:00.854 | INFO     | src.cv_layer.food_detector:load_model:80 - YOLO model ready on device: cpu
+2026-04-08 15:13:02.520 | INFO     | src.cv_layer.food_detector:detect:160 - Detected 3 objects
+2026-04-08 15:13:02.575 | INFO     | src.pipeline:analyze:106 - Running Gemini analysis...
+2026-04-08 15:14:11.995 | INFO     | src.gemini_layer.gemini_client:analyze_from_bytes:164 - Nutrition analysis complete: 900 total calories
+2026-04-08 15:14:11.997 | INFO     | src.pipeline:analyze:133 - Analysis complete: 900 calories
+2026-04-08 15:20:27.454 | INFO     | src.gemini_layer.gemini_client:__init__:289 - Gemini ingredient analyzer initialized with model: gemini-2.5-flash
+2026-04-08 15:20:46.128 | INFO     | src.gemini_layer.gemini_client:analyze_from_bytes:306 - Ingredient analysis complete: 18 ingredients detected

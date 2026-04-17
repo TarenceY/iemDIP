@@ -42,7 +42,6 @@ export default function AppLayout({ activePage, children }) {
             }}
           >
             <img src={seefoodLogo} alt="SeeFood logo" />
-            <span>SeeFood</span>
           </div>
 
           <nav className="app-nav">
